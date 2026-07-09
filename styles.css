@@ -37,6 +37,7 @@ body {
   margin: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background:
     radial-gradient(circle at 15% 10%, rgba(255, 214, 90, 0.18), transparent 32%),
@@ -49,6 +50,7 @@ body {
 .dashboard {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,16 +61,18 @@ body {
 }
 
 .slide-root {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .slide {
-  width: min(1120px, 96vw);
-  height: min(620px, 92vh);
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   position: relative;
   background:
     linear-gradient(
@@ -77,9 +81,12 @@ body {
       rgba(255, 255, 255, 1) 32%,
       rgba(247, 250, 252, 1) 100%
     );
-  padding: 44px 56px 48px;
-  border-radius: 34px;
-  box-shadow: 0 26px 70px rgba(5, 40, 74, 0.18);
+  padding:
+    clamp(28px, 5.2vh, 64px)
+    clamp(38px, 5.5vw, 96px)
+    clamp(28px, 5vh, 64px);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   isolation: isolate;
 }
@@ -87,10 +94,10 @@ body {
 .slide::before {
   content: "";
   position: absolute;
-  width: 360px;
-  height: 360px;
-  top: -170px;
-  right: -120px;
+  width: clamp(300px, 28vw, 520px);
+  height: clamp(300px, 28vw, 520px);
+  top: clamp(-260px, -14vw, -130px);
+  right: clamp(-220px, -9vw, -90px);
   background: radial-gradient(
     circle,
     rgba(255, 214, 90, 0.26),
@@ -102,10 +109,10 @@ body {
 .slide::after {
   content: "";
   position: absolute;
-  width: 520px;
-  height: 520px;
-  left: -260px;
-  bottom: -280px;
+  width: clamp(420px, 40vw, 760px);
+  height: clamp(420px, 40vw, 760px);
+  left: clamp(-380px, -16vw, -180px);
+  bottom: clamp(-420px, -20vw, -220px);
   background: radial-gradient(
     circle,
     rgba(63, 125, 241, 0.13),
@@ -113,6 +120,8 @@ body {
   );
   z-index: -1;
 }
+
+/* Loading + error */
 
 .loading-screen {
   width: 100%;
@@ -232,24 +241,33 @@ body {
   }
 }
 
-/* Last 6 Weeks */
+/* =========================================================
+   LAST 6 WEEKS
+========================================================= */
+
+.slide:has(.last6-header) {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
 
 .last6-header {
   display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 180px;
+  grid-template-columns: clamp(70px, 8vw, 130px) minmax(0, 1fr) clamp(150px, 16vw, 260px);
   align-items: center;
-  column-gap: 28px;
-  margin-bottom: 30px;
+  column-gap: clamp(20px, 3vw, 46px);
+  margin-bottom: 0;
+  align-self: start;
 }
 
 .last6-title {
   grid-column: 2;
-  font-size: 34px;
+  font-size: clamp(32px, 4.6vh, 58px);
   font-weight: 900;
   letter-spacing: -0.055em;
   position: relative;
   display: inline-block;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  line-height: 1;
 }
 
 .last6-title::after {
@@ -271,35 +289,37 @@ body {
 .last6-total-title {
   grid-column: 3;
   text-align: center;
-  font-size: 20px;
+  font-size: clamp(18px, 2.2vh, 30px);
   font-weight: 900;
   color: var(--enpal-navy);
 }
 
 .last6-rows {
   display: grid;
-  gap: 34px;
+  gap: clamp(34px, 7vh, 86px);
+  align-self: center;
+  transform: translateY(-2vh);
 }
 
 .last6-row {
   display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 180px;
+  grid-template-columns: clamp(70px, 8vw, 130px) minmax(0, 1fr) clamp(150px, 16vw, 260px);
   align-items: end;
-  column-gap: 28px;
+  column-gap: clamp(20px, 3vw, 46px);
 }
 
 .last6-metric {
   align-self: center;
-  font-size: 34px;
+  font-size: clamp(30px, 4.2vh, 56px);
   font-weight: 900;
   letter-spacing: -0.04em;
 }
 
 .last6-chart-card {
-  height: 185px;
+  height: clamp(185px, 27vh, 310px);
   background: rgba(255, 255, 255, 0.78);
   border: 1.5px solid var(--enpal-border);
-  border-radius: 26px;
+  border-radius: clamp(22px, 2.2vw, 38px);
   padding: 24px 24px 20px;
   box-shadow: 0 14px 34px var(--enpal-shadow);
   display: flex;
@@ -309,11 +329,11 @@ body {
 
 .last6-chart {
   width: 100%;
-  height: 135px;
+  height: clamp(135px, 21vh, 240px);
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 18px;
+  gap: clamp(12px, 2vw, 32px);
   padding: 0 14px;
   min-width: 0;
 }
@@ -329,26 +349,26 @@ body {
 }
 
 .last6-value {
-  font-size: 13px;
+  font-size: clamp(13px, 1.7vh, 22px);
   font-weight: 900;
   margin-bottom: 7px;
 }
 
 .last6-bar {
-  width: min(54px, 80%);
+  width: clamp(42px, 4.8vw, 88px);
   border-radius: 14px 14px 0 0;
 }
 
 .last6-label {
-  font-size: 10px;
+  font-size: clamp(9px, 1.25vh, 16px);
   margin-top: 6px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .last6-total-card {
-  height: 185px;
-  border-radius: 26px;
+  height: clamp(185px, 27vh, 310px);
+  border-radius: clamp(22px, 2.2vw, 38px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -359,18 +379,27 @@ body {
 }
 
 .last6-total {
-  font-size: 46px;
+  font-size: clamp(42px, 6vh, 82px);
   font-weight: 900;
   letter-spacing: -0.055em;
   line-height: 1;
   white-space: nowrap;
 }
 
-/* Daily + MTD overview slides */
+/* =========================================================
+   DAILY + OVERALL MTD
+========================================================= */
+
+.slide.overview-agency-slide {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+}
 
 .overview-title {
-  margin-bottom: 24px;
-  font-size: 42px;
+  align-self: start;
+  margin-bottom: clamp(18px, 2.6vh, 30px);
+  font-size: clamp(32px, 4.6vh, 58px);
   line-height: 1;
   letter-spacing: -0.06em;
   font-weight: 900;
@@ -398,20 +427,25 @@ body {
 
 .overview-agency-table {
   display: grid;
-  grid-template-columns: 170px 120px repeat(3, minmax(0, 1fr));
-  column-gap: 20px;
-  row-gap: 12px;
+  grid-template-columns:
+    clamp(150px, 17vw, 280px)
+    clamp(100px, 10vw, 180px)
+    repeat(3, minmax(0, 1fr));
+  column-gap: clamp(12px, 2vw, 34px);
+  row-gap: clamp(12px, 1.8vh, 20px);
   width: 100%;
   align-items: stretch;
+  align-self: center;
+  transform: translateY(-1.5vh);
 }
 
 .overview-agency-table .head-spacer,
 .overview-agency-table .total-head {
-  height: 42px;
+  height: clamp(38px, 5.4vh, 66px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: clamp(15px, 2vh, 28px);
   font-weight: 900;
   color: var(--enpal-navy);
 }
@@ -421,14 +455,14 @@ body {
 }
 
 .overview-agency-table .team-head {
-  height: 42px;
+  height: clamp(38px, 5.4vh, 66px);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px 12px 0 0;
   background: linear-gradient(135deg, var(--enpal-navy), var(--enpal-navy-2));
   color: #ffffff;
-  font-size: 19px;
+  font-size: clamp(15px, 2vh, 28px);
   font-weight: 900;
   box-shadow: 0 10px 22px rgba(5, 40, 74, 0.18);
 }
@@ -436,9 +470,12 @@ body {
 .overview-line {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 170px 120px repeat(3, minmax(0, 1fr));
-  column-gap: 20px;
-  min-height: 82px;
+  grid-template-columns:
+    clamp(150px, 17vw, 280px)
+    clamp(100px, 10vw, 180px)
+    repeat(3, minmax(0, 1fr));
+  column-gap: clamp(12px, 2vw, 34px);
+  min-height: clamp(82px, 11vh, 132px);
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -447,22 +484,24 @@ body {
 }
 
 .overview-metric-label {
-  height: 82px;
+  height: clamp(82px, 11vh, 132px);
+  min-height: clamp(82px, 11vh, 132px);
   display: flex;
   align-items: center;
   padding-left: 8px;
-  font-size: 16px;
+  font-size: clamp(14px, 1.8vh, 25px);
   font-weight: 900;
   color: var(--enpal-navy);
   background: transparent;
 }
 
 .overview-total-number {
-  height: 82px;
+  height: clamp(82px, 11vh, 132px);
+  min-height: clamp(82px, 11vh, 132px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: clamp(28px, 4.3vh, 58px);
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.045em;
@@ -471,7 +510,8 @@ body {
 
 .overview-team-group {
   grid-column: 3 / 6;
-  min-height: 82px;
+  min-height: clamp(82px, 11vh, 132px);
+  height: clamp(82px, 11vh, 132px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 0;
@@ -484,18 +524,19 @@ body {
 }
 
 .overview-team-box {
-  min-height: 82px;
+  min-height: clamp(82px, 11vh, 132px);
+  height: clamp(82px, 11vh, 132px);
   display: flex;
   align-items: end;
   justify-content: center;
-  padding: 8px 12px 10px;
+  padding: 10px 14px 10px;
   background: transparent;
   border-left: 0;
 }
 
 .overview-mini-chart {
   width: 100%;
-  height: 60px;
+  height: clamp(62px, 8.5vh, 96px);
   display: flex;
   flex-direction: column;
   justify-content: end;
@@ -503,15 +544,15 @@ body {
 }
 
 .overview-mini-value {
-  font-size: 11px;
+  font-size: clamp(11px, 1.45vh, 18px);
   font-weight: 900;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   line-height: 1;
 }
 
 .overview-mini-bar {
-  width: 62px;
-  max-height: 48px;
+  width: clamp(78px, 7vw, 115px);
+  max-height: clamp(44px, 5.8vh, 68px);
   border-radius: 10px 10px 0 0;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.32),
@@ -554,23 +595,31 @@ body {
   background: var(--metric-dark-blue);
 }
 
-/* Team slides */
+/* =========================================================
+   AGENCY-SPECIFIC SLIDES: NOVA / VF / MHM
+========================================================= */
+
+.slide:has(.team-top) {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
 
 .team-top {
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  column-gap: 28px;
+  grid-template-columns: clamp(120px, 13vw, 240px) minmax(0, 1fr);
+  column-gap: clamp(20px, 3vw, 52px);
   align-items: center;
-  margin-bottom: 22px;
+  margin-bottom: clamp(18px, 2.6vh, 30px);
 }
 
 .team-title {
-  font-size: 42px;
+  font-size: clamp(32px, 4.6vh, 58px);
   font-weight: 900;
   letter-spacing: -0.06em;
   position: relative;
   display: inline-block;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  line-height: 1;
 }
 
 .team-title::after {
@@ -590,12 +639,14 @@ body {
 }
 
 .summary-card {
-  min-height: 58px;
+  min-height: clamp(58px, 7vh, 90px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  padding: 10px 18px 10px 20px;
+  gap: clamp(16px, 2vw, 34px);
+  padding:
+    clamp(8px, 1.2vh, 18px)
+    clamp(16px, 2vw, 34px);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.78);
   border: 1.5px solid var(--enpal-border);
@@ -603,14 +654,14 @@ body {
 }
 
 .summary-title {
-  font-size: 15px;
+  font-size: clamp(14px, 1.8vh, 24px);
   font-weight: 800;
 }
 
 .summary-values {
   display: flex;
   align-items: center;
-  gap: 42px;
+  gap: clamp(24px, 4vw, 76px);
 }
 
 .summary-item {
@@ -620,13 +671,13 @@ body {
 }
 
 .summary-label {
-  font-size: 16px;
+  font-size: clamp(15px, 2vh, 26px);
   font-weight: 900;
 }
 
 .summary-number {
-  min-width: 80px;
-  height: 34px;
+  min-width: clamp(72px, 8vw, 140px);
+  height: clamp(32px, 4.4vh, 58px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -634,45 +685,48 @@ body {
     linear-gradient(180deg, #ffffff, #f7fafc);
   border: 2px solid rgba(5, 40, 74, 0.16);
   border-radius: 10px;
-  font-size: 19px;
+  font-size: clamp(18px, 2.5vh, 34px);
   font-weight: 900;
 }
 
 .team-content {
+  height: 100%;
+  align-self: stretch;
   display: grid;
-  grid-template-columns: 155px minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 20px;
+  grid-template-columns: clamp(130px, 15vw, 260px) minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: clamp(14px, 2vw, 36px);
 }
 
 .section-title {
-  height: 42px;
+  height: clamp(44px, 5.6vh, 72px);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px 12px 0 0;
   background: linear-gradient(135deg, var(--enpal-navy), var(--enpal-navy-2));
   color: #ffffff;
-  font-size: 19px;
+  font-size: clamp(16px, 2.2vh, 30px);
   font-weight: 900;
-  margin-bottom: 12px;
+  margin-bottom: clamp(10px, 1.4vh, 16px);
 }
 
 .label-spacer {
-  height: 42px;
-  margin-bottom: 12px;
+  height: clamp(44px, 5.6vh, 72px);
+  margin-bottom: clamp(10px, 1.4vh, 16px);
 }
 
-.metric-labels {
+.metric-labels,
+.chart-stack {
   display: grid;
-  row-gap: 12px;
+  row-gap: clamp(10px, 1.4vh, 16px);
 }
 
 .metric-label {
-  height: 93px;
+  height: clamp(105px, 15.2vh, 172px);
   display: flex;
   align-items: center;
   padding-left: 8px;
-  font-size: 16px;
+  font-size: clamp(16px, 2vh, 28px);
   font-weight: 900;
 }
 
@@ -680,30 +734,28 @@ body {
   min-width: 0;
 }
 
-.chart-stack {
-  display: grid;
-  row-gap: 12px;
-}
-
 .chart-card {
-  height: 93px;
+  height: clamp(105px, 15.2vh, 172px);
   min-width: 0;
   background: rgba(255, 255, 255, 0.78);
   border: 1.5px solid var(--enpal-border);
   border-radius: 22px;
   box-shadow: 0 12px 28px var(--enpal-shadow);
-  padding: 12px 14px 10px;
+  padding:
+    clamp(12px, 1.5vh, 22px)
+    clamp(14px, 1.6vw, 28px)
+    clamp(10px, 1.3vh, 20px);
   display: flex;
   align-items: end;
 }
 
 .mini-chart {
   width: 100%;
-  height: 72px;
+  height: clamp(88px, 12.8vh, 148px);
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 8px;
+  gap: clamp(5px, 0.8vw, 14px);
 }
 
 .bar-wrap {
@@ -718,23 +770,23 @@ body {
 }
 
 .bar-value {
-  font-size: 9px;
+  font-size: clamp(9px, 1.25vh, 17px);
   font-weight: 900;
-  margin-bottom: 4px;
+  margin-bottom: clamp(4px, 0.7vh, 8px);
   line-height: 1;
   opacity: 0.78;
 }
 
 .team-bar {
-  width: min(32px, 82%);
-  border-radius: 12px 12px 0 0;
+  width: clamp(28px, 3.2vw, 58px);
+  border-radius: 14px 14px 0 0;
   opacity: 0.72;
 }
 
 .bar-label {
-  font-size: 7px;
+  font-size: clamp(7px, 1vh, 14px);
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: clamp(4px, 0.65vh, 8px);
   white-space: nowrap;
   opacity: 0.78;
 }
@@ -744,16 +796,16 @@ body {
     linear-gradient(to top, rgba(5, 40, 74, 0.045) 1px, transparent 1px),
     var(--enpal-light-grey);
   background-size: 100% 24px;
-  padding: 10px 18px 10px;
 }
 
 .weekly-chart {
-  height: 74px;
-  gap: 18px;
+  height: clamp(88px, 12.8vh, 148px);
+  gap: clamp(10px, 1.6vw, 28px);
 }
 
 .weekly-chart .team-bar {
-  width: min(44px, 88%);
+  width: clamp(42px, 4.4vw, 82px);
+  border-radius: 14px 14px 0 0;
 }
 
 .chart-card .bar-wrap.latest .team-bar {
@@ -773,13 +825,16 @@ body {
   display: none !important;
 }
 
-/* GIF Celebration Trigger Slide - kept as original style */
+/* =========================================================
+   GIF CELEBRATION SLIDE
+========================================================= */
 
 .gif-celebration {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
   z-index: 999999;
 
   background-color: #000;
@@ -797,6 +852,7 @@ body {
 
   padding: 60px 8vw;
   box-sizing: border-box;
+  border-radius: 0 !important;
 }
 
 .gif-celebration-card {
@@ -824,11 +880,70 @@ body {
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.85);
 }
 
-@media (max-width: 900px) {
+/* =========================================================
+   SMALLER HEIGHT PROTECTION
+========================================================= */
+
+@media (max-height: 800px) {
   .slide {
-    padding: 32px 28px 34px;
+    padding:
+      clamp(20px, 4vh, 34px)
+      clamp(28px, 4vw, 54px);
   }
 
+  .last6-title,
+  .overview-title,
+  .team-title {
+    font-size: clamp(30px, 5vh, 42px);
+  }
+
+  .last6-chart-card,
+  .last6-total-card {
+    height: clamp(145px, 25vh, 180px);
+  }
+
+  .overview-agency-table {
+    transform: translateY(-0.5vh);
+  }
+
+  .overview-line {
+    min-height: 76px;
+  }
+
+  .overview-metric-label,
+  .overview-total-number,
+  .overview-team-group,
+  .overview-team-box {
+    min-height: 76px;
+    height: 76px;
+  }
+
+  .overview-mini-chart {
+    height: 56px;
+  }
+
+  .overview-mini-bar {
+    width: 82px;
+    max-height: 48px;
+  }
+
+  .metric-label,
+  .chart-card {
+    height: clamp(88px, 13vh, 112px);
+  }
+
+  .mini-chart,
+  .weekly-chart {
+    height: clamp(72px, 10vh, 92px);
+  }
+
+  .section-title,
+  .label-spacer {
+    height: 42px;
+  }
+}
+
+@media (max-width: 900px) {
   .overview-agency-table {
     grid-template-columns: 130px 90px repeat(3, minmax(0, 1fr));
     column-gap: 10px;
@@ -846,10 +961,6 @@ body {
   .team-top {
     grid-template-columns: 115px minmax(0, 1fr);
     column-gap: 18px;
-  }
-
-  .team-title {
-    font-size: 32px;
   }
 
   .summary-card {
@@ -905,319 +1016,5 @@ body {
 
   .bar-label {
     font-size: 6px;
-  }
-}
-
-/* =========================================================
-   FULLSCREEN TV MODE
-   Makes each slide take the whole browser page
-   while keeping all elements inside the viewport.
-   Add this at the VERY BOTTOM of styles.css.
-========================================================= */
-
-html,
-body,
-.dashboard,
-.slide-root {
-  width: 100vw;
-  height: 100dvh;
-  min-width: 100vw;
-  min-height: 100dvh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.slide-root {
-  align-items: stretch;
-  justify-content: stretch;
-}
-
-/* Full-page slide instead of fixed 1120x620 card */
-.slide {
-  width: 100vw !important;
-  height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
-
-  border-radius: 0 !important;
-  box-shadow: none !important;
-
-  padding:
-    clamp(28px, 5.2vh, 64px)
-    clamp(38px, 5.5vw, 96px)
-    clamp(28px, 5vh, 64px) !important;
-}
-
-/* Keep slide background dimensional in fullscreen */
-.slide::before {
-  width: clamp(300px, 28vw, 520px);
-  height: clamp(300px, 28vw, 520px);
-  top: clamp(-260px, -14vw, -130px);
-  right: clamp(-220px, -9vw, -90px);
-}
-
-.slide::after {
-  width: clamp(420px, 40vw, 760px);
-  height: clamp(420px, 40vw, 760px);
-  left: clamp(-380px, -16vw, -180px);
-  bottom: clamp(-420px, -20vw, -220px);
-}
-
-/* Titles scale up on TV but do not overflow on smaller screens */
-.last6-title,
-.overview-title,
-.team-title {
-  font-size: clamp(32px, 4.6vh, 58px) !important;
-  line-height: 1 !important;
-}
-
-/* =========================
-   Last 6 Weeks fullscreen
-========================= */
-
-.last6-header {
-  grid-template-columns: clamp(70px, 8vw, 130px) minmax(0, 1fr) clamp(150px, 16vw, 260px);
-  column-gap: clamp(20px, 3vw, 46px);
-  margin-bottom: clamp(24px, 4vh, 48px);
-}
-
-.last6-total-title {
-  font-size: clamp(18px, 2.2vh, 30px);
-}
-
-.last6-rows {
-  gap: clamp(26px, 5vh, 64px);
-}
-
-.last6-row {
-  grid-template-columns: clamp(70px, 8vw, 130px) minmax(0, 1fr) clamp(150px, 16vw, 260px);
-  column-gap: clamp(20px, 3vw, 46px);
-}
-
-.last6-metric {
-  font-size: clamp(30px, 4.2vh, 56px);
-}
-
-.last6-chart-card,
-.last6-total-card {
-  height: clamp(165px, 28vh, 310px);
-  border-radius: clamp(22px, 2.2vw, 38px);
-}
-
-.last6-chart {
-  height: clamp(120px, 22vh, 240px);
-  gap: clamp(12px, 2vw, 32px);
-}
-
-.last6-value {
-  font-size: clamp(13px, 1.7vh, 22px);
-}
-
-.last6-bar {
-  width: clamp(42px, 4.8vw, 88px);
-}
-
-.last6-label {
-  font-size: clamp(9px, 1.25vh, 16px);
-}
-
-.last6-total {
-  font-size: clamp(42px, 6vh, 82px);
-}
-
-/* =========================
-   Daily + MTD fullscreen
-========================= */
-
-.overview-agency-table {
-  grid-template-columns:
-    clamp(150px, 17vw, 280px)
-    clamp(100px, 10vw, 180px)
-    repeat(3, minmax(0, 1fr));
-  column-gap: clamp(12px, 2vw, 34px);
-  row-gap: clamp(9px, 1.5vh, 18px);
-}
-
-.overview-agency-table .head-spacer,
-.overview-agency-table .total-head,
-.overview-agency-table .team-head {
-  height: clamp(38px, 5.4vh, 66px);
-  font-size: clamp(15px, 2vh, 28px);
-}
-
-.overview-line {
-  grid-template-columns:
-    clamp(150px, 17vw, 280px)
-    clamp(100px, 10vw, 180px)
-    repeat(3, minmax(0, 1fr));
-  column-gap: clamp(12px, 2vw, 34px);
-  min-height: clamp(72px, 10.5vh, 126px);
-}
-
-.overview-metric-label,
-.overview-total-number,
-.overview-team-group,
-.overview-team-box {
-  min-height: clamp(72px, 10.5vh, 126px);
-  height: clamp(72px, 10.5vh, 126px);
-}
-
-.overview-metric-label {
-  font-size: clamp(14px, 1.8vh, 25px);
-}
-
-.overview-total-number {
-  font-size: clamp(28px, 4.3vh, 58px);
-}
-
-.overview-mini-chart {
-  height: clamp(54px, 8.2vh, 96px);
-}
-
-.overview-mini-value {
-  font-size: clamp(11px, 1.55vh, 20px);
-}
-
-.overview-mini-bar {
-  width: clamp(48px, 5vw, 86px);
-  max-height: clamp(42px, 6.5vh, 76px);
-}
-
-/* =========================
-   Agency detail slides fullscreen
-========================= */
-
-.team-top {
-  grid-template-columns: clamp(120px, 13vw, 240px) minmax(0, 1fr);
-  column-gap: clamp(20px, 3vw, 52px);
-  margin-bottom: clamp(18px, 3vh, 38px);
-}
-
-.summary-card {
-  min-height: clamp(54px, 7vh, 86px);
-  padding:
-    clamp(8px, 1.2vh, 18px)
-    clamp(16px, 2vw, 34px);
-}
-
-.summary-title {
-  font-size: clamp(14px, 1.8vh, 24px);
-}
-
-.summary-values {
-  gap: clamp(24px, 4vw, 76px);
-}
-
-.summary-label {
-  font-size: clamp(15px, 2vh, 26px);
-}
-
-.summary-number {
-  min-width: clamp(72px, 8vw, 140px);
-  height: clamp(32px, 4.4vh, 58px);
-  font-size: clamp(18px, 2.5vh, 34px);
-}
-
-.team-content {
-  grid-template-columns: clamp(130px, 15vw, 260px) minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: clamp(14px, 2vw, 36px);
-}
-
-.section-title,
-.label-spacer {
-  height: clamp(38px, 5.2vh, 64px);
-  margin-bottom: clamp(9px, 1.4vh, 18px);
-}
-
-.section-title {
-  font-size: clamp(16px, 2.2vh, 30px);
-}
-
-.metric-labels,
-.chart-stack {
-  row-gap: clamp(9px, 1.4vh, 18px);
-}
-
-.metric-label,
-.chart-card {
-  height: clamp(76px, 11.5vh, 136px);
-}
-
-.metric-label {
-  font-size: clamp(14px, 1.75vh, 25px);
-}
-
-.chart-card {
-  padding:
-    clamp(9px, 1.2vh, 18px)
-    clamp(10px, 1.4vw, 24px)
-    clamp(8px, 1.1vh, 16px);
-}
-
-.mini-chart {
-  height: clamp(60px, 9.4vh, 110px);
-  gap: clamp(5px, 0.8vw, 14px);
-}
-
-.weekly-chart {
-  height: clamp(62px, 9.6vh, 112px);
-  gap: clamp(10px, 1.6vw, 28px);
-}
-
-.bar-value {
-  font-size: clamp(8px, 1.15vh, 16px);
-}
-
-.bar-label {
-  font-size: clamp(6px, 0.95vh, 13px);
-}
-
-.team-bar {
-  width: clamp(22px, 2.6vw, 52px);
-}
-
-.weekly-chart .team-bar {
-  width: clamp(30px, 3.8vw, 76px);
-}
-
-/* GIF celebration should also fill the browser */
-.gif-celebration {
-  width: 100vw !important;
-  height: 100dvh !important;
-  border-radius: 0 !important;
-}
-
-/* Extra protection for smaller browser heights */
-@media (max-height: 720px) {
-  .slide {
-    padding:
-      clamp(20px, 4vh, 34px)
-      clamp(28px, 4vw, 54px) !important;
-  }
-
-  .overview-title,
-  .team-title,
-  .last6-title {
-    font-size: clamp(30px, 5vh, 42px) !important;
-  }
-
-  .overview-line,
-  .overview-metric-label,
-  .overview-total-number,
-  .overview-team-group,
-  .overview-team-box {
-    min-height: clamp(62px, 10vh, 78px);
-    height: clamp(62px, 10vh, 78px);
-  }
-
-  .metric-label,
-  .chart-card {
-    height: clamp(68px, 10.8vh, 88px);
-  }
-
-  .last6-chart-card,
-  .last6-total-card {
-    height: clamp(145px, 25vh, 180px);
   }
 }

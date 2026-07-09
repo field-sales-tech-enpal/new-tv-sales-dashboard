@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>TV Sales Dashboard</title>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <main id="dashboard" class="dashboard">
+
+    <section id="loading" class="loading-screen">
+      <div class="loading-card">
+        <div class="loading-title">Loading dashboard…</div>
+        <div class="loading-subtitle">Fetching latest sales data</div>
+      </div>
+    </section>
+
+    <section id="slideRoot" class="slide-root hidden"></section>
+
+    <section id="errorBox" class="error-box hidden">
+      <div class="error-title">Dashboard error</div>
+      <div id="errorMessage" class="error-message"></div>
+    </section>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

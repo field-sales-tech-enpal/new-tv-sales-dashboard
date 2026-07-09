@@ -4,6 +4,7 @@ const state = {
   currentSlideIndex: 0,
   rotationTimer: null,
   refreshTimer: null,
+  triggerRefreshTimer: null,
   triggerTimer: null,
   lastShownTriggerId: localStorage.getItem("lastShownTriggerId") || "",
   isShowingTrigger: false
@@ -26,6 +27,7 @@ async function initDashboard() {
     renderCurrentSlide();
     startRotation();
     startRefreshLoop();
+    startTriggerRefreshLoop();
   } catch (error) {
     showError(error);
   }
@@ -48,6 +50,39 @@ async function loadData() {
   }
 
   state.data = await response.json();
+}
+
+async function loadTriggerData() {
+  const baseUrl = window.DASHBOARD_CONFIG.DATA_URL;
+
+  if (!baseUrl || baseUrl.includes("PASTE_YOUR")) {
+    throw new Error("Missing DATA_URL in config.js");
+  }
+
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  const url = `${baseUrl}${separator}mode=trigger`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Trigger fetch failed: ${response.status} ${response.statusText}`);
+  }
+
+  const triggerData = await response.json();
+
+  if (!state.data) {
+    state.data = {};
+  }
+
+  state.data.config = {
+    ...(state.data.config || {}),
+    ...(triggerData.config || {})
+  };
+
+  state.data.triggers = triggerData.triggers || [];
 }
 
 function startRotation() {
@@ -73,18 +108,37 @@ function startRefreshLoop() {
   const seconds = Number(
     state.data?.config?.refreshSeconds ||
     window.DASHBOARD_CONFIG.DEFAULT_REFRESH_SECONDS ||
-    60
+    300
   );
 
   state.refreshTimer = setInterval(async () => {
     try {
       await loadData();
-      checkForTrigger();
 
       if (!state.isShowingTrigger) {
         renderCurrentSlide();
       }
 
+      hideError();
+    } catch (error) {
+      showError(error);
+    }
+  }, seconds * 1000);
+}
+
+function startTriggerRefreshLoop() {
+  clearInterval(state.triggerRefreshTimer);
+
+  const seconds = Number(
+    state.data?.config?.triggerRefreshSeconds ||
+    window.DASHBOARD_CONFIG.DEFAULT_TRIGGER_REFRESH_SECONDS ||
+    10
+  );
+
+  state.triggerRefreshTimer = setInterval(async () => {
+    try {
+      await loadTriggerData();
+      checkForTrigger();
       hideError();
     } catch (error) {
       showError(error);
@@ -424,17 +478,38 @@ function renderTriggerSlide(trigger) {
   const value = trigger.Value;
   const timestamp = trigger.Timestamp ? formatTimestamp(trigger.Timestamp) : "";
 
-  const cssClass = metric === "TBK" ? "tbk-color" : "idv-color";
+  const cssClass = metric === "TBK" ? "tbk-celebration" : "idv-celebration";
+  const emoji = metric === "TBK" ? "🎉" : "🚀";
 
   return `
-    <main class="slide trigger-slide">
-      <div class="trigger-kicker">New trigger received</div>
-      <div class="trigger-main ${cssClass}">${escapeHtml(metric)}</div>
-      <div class="trigger-meta">${escapeHtml(team)}</div>
-      ${value !== "" && value !== null && value !== undefined ? `
-        <div class="trigger-message">${escapeHtml(value)}</div>
-      ` : ""}
-      ${timestamp ? `<div class="trigger-kicker">${escapeHtml(timestamp)}</div>` : ""}
+    <main class="celebration-slide ${cssClass}">
+      <div class="confetti confetti-1"></div>
+      <div class="confetti confetti-2"></div>
+      <div class="confetti confetti-3"></div>
+      <div class="confetti confetti-4"></div>
+      <div class="confetti confetti-5"></div>
+      <div class="confetti confetti-6"></div>
+      <div class="confetti confetti-7"></div>
+      <div class="confetti confetti-8"></div>
+
+      <section class="celebration-card">
+        <div class="celebration-emoji">${emoji}</div>
+        <div class="celebration-kicker">NEW ${escapeHtml(metric)}!</div>
+        <div class="celebration-main">${escapeHtml(metric)}</div>
+        <div class="celebration-team">${escapeHtml(team)}</div>
+
+        ${
+          value !== "" && value !== null && value !== undefined
+            ? `<div class="celebration-message">${escapeHtml(value)}</div>`
+            : ""
+        }
+
+        ${
+          timestamp
+            ? `<div class="celebration-time">${escapeHtml(timestamp)}</div>`
+            : ""
+        }
+      </section>
     </main>
   `;
 }

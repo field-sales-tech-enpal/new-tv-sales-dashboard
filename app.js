@@ -26,7 +26,7 @@ async function initDashboard() {
 
     renderCurrentSlide();
     startRotation();
-    startRefreshLoop();
+    startFullDataRefreshLoop();
     startTriggerRefreshLoop();
   } catch (error) {
     showError(error);
@@ -102,7 +102,7 @@ function startRotation() {
   }, seconds * 1000);
 }
 
-function startRefreshLoop() {
+function startFullDataRefreshLoop() {
   clearInterval(state.refreshTimer);
 
   const seconds = Number(

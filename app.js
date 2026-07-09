@@ -7,7 +7,8 @@ const state = {
   triggerRefreshTimer: null,
   triggerTimer: null,
   lastShownTriggerId: localStorage.getItem("lastShownTriggerId") || "",
-  isShowingTrigger: false
+  isShowingTrigger: false,
+  audioPools: {}
 };
 
 const slideRoot = document.getElementById("slideRoot");
@@ -19,6 +20,8 @@ initDashboard();
 
 async function initDashboard() {
   try {
+    setupAudioPools();
+
     await loadData();
 
     loading.classList.add("hidden");
@@ -28,6 +31,7 @@ async function initDashboard() {
     startRotation();
     startFullDataRefreshLoop();
     startTriggerRefreshLoop();
+    setupAudioUnlock();
   } catch (error) {
     showError(error);
   }
@@ -169,6 +173,9 @@ function checkForTrigger() {
 function showTriggerSlide(trigger) {
   state.isShowingTrigger = true;
   slideRoot.innerHTML = renderTriggerSlide(trigger);
+
+  const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
+  playCelebrationSound(metric);
 
   clearTimeout(state.triggerTimer);
 
@@ -474,41 +481,24 @@ function renderTeamChartCard({ cssClass, rows, valueKey, labelKey, weekly }) {
 
 function renderTriggerSlide(trigger) {
   const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
-  const team = String(trigger.Team || "");
   const value = trigger.Value;
-  const timestamp = trigger.Timestamp ? formatTimestamp(trigger.Timestamp) : "";
 
-  const cssClass = metric === "TBK" ? "tbk-celebration" : "idv-celebration";
-  const emoji = metric === "TBK" ? "🎉" : "🚀";
+  const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
+  const celebration = celebrations[metric] || celebrations.IDV || {};
+
+  const title = celebration.title || `🎉 NEW ${metric} 🎉`;
+  const gif = celebration.gif || "";
+  const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
+
+  const backgroundStyle = gif
+    ? `style="background-image: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('${escapeAttribute(gif)}');"`
+    : "";
 
   return `
-    <main class="celebration-slide ${cssClass}">
-      <div class="confetti confetti-1"></div>
-      <div class="confetti confetti-2"></div>
-      <div class="confetti confetti-3"></div>
-      <div class="confetti confetti-4"></div>
-      <div class="confetti confetti-5"></div>
-      <div class="confetti confetti-6"></div>
-      <div class="confetti confetti-7"></div>
-      <div class="confetti confetti-8"></div>
-
-      <section class="celebration-card">
-        <div class="celebration-emoji">${emoji}</div>
-        <div class="celebration-kicker">NEW ${escapeHtml(metric)}!</div>
-        <div class="celebration-main">${escapeHtml(metric)}</div>
-        <div class="celebration-team">${escapeHtml(team)}</div>
-
-        ${
-          value !== "" && value !== null && value !== undefined
-            ? `<div class="celebration-message">${escapeHtml(value)}</div>`
-            : ""
-        }
-
-        ${
-          timestamp
-            ? `<div class="celebration-time">${escapeHtml(timestamp)}</div>`
-            : ""
-        }
+    <main class="gif-celebration" ${backgroundStyle}>
+      <section class="gif-celebration-card">
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(message)}</p>
       </section>
     </main>
   `;
@@ -516,11 +506,97 @@ function renderTriggerSlide(trigger) {
 
 function renderFallbackSlide(slideId) {
   return `
-    <main class="slide trigger-slide">
-      <div class="trigger-kicker">Slide not configured</div>
-      <div class="trigger-meta">${escapeHtml(slideId)}</div>
+    <main class="slide">
+      <section class="overview-title">
+        <span>Slide not configured: ${escapeHtml(slideId)}</span>
+      </section>
     </main>
   `;
+}
+
+function setupAudioPools() {
+  const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
+
+  Object.keys(celebrations).forEach(key => {
+    const sound = celebrations[key]?.sound;
+    if (!sound) return;
+
+    state.audioPools[key] = makeAudioPool(sound, 3);
+  });
+}
+
+function makeAudioPool(src, size = 3) {
+  const pool = [];
+
+  for (let i = 0; i < size; i++) {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.load();
+    pool.push(audio);
+  }
+
+  return {
+    src,
+    pool,
+    index: 0
+  };
+}
+
+function playCelebrationSound(metric) {
+  const pool = state.audioPools[metric];
+  if (!pool || !pool.pool.length) return;
+
+  const audio = pool.pool[pool.index];
+  pool.index = (pool.index + 1) % pool.pool.length;
+
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+
+    const playPromise = audio.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(error => {
+        console.log("Audio play blocked or failed:", error);
+      });
+    }
+  } catch (error) {
+    console.log("Audio error:", error);
+  }
+}
+
+function setupAudioUnlock() {
+  function unlockAudio() {
+    Object.values(state.audioPools).forEach(pool => {
+      pool.pool.forEach(audio => {
+        const previousVolume = audio.volume;
+
+        audio.volume = 0;
+
+        const playPromise = audio.play();
+
+        if (playPromise && typeof playPromise.then === "function") {
+          playPromise
+            .then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+              audio.volume = previousVolume;
+            })
+            .catch(() => {
+              audio.volume = previousVolume;
+            });
+        } else {
+          audio.volume = previousVolume;
+        }
+      });
+    });
+
+    window.removeEventListener("keydown", unlockAudio);
+    window.removeEventListener("pointerdown", unlockAudio);
+  }
+
+  window.addEventListener("keydown", unlockAudio, { once: true });
+  window.addEventListener("pointerdown", unlockAudio, { once: true });
 }
 
 function getTeamMtdValue(teamName, metric) {
@@ -553,22 +629,6 @@ function formatNumber(value) {
     .replace(/\./g, " ");
 }
 
-function formatTimestamp(value) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
 function toBoolean(value) {
   if (value === true) return true;
 
@@ -584,6 +644,13 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function escapeAttribute(value) {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/"/g, "&quot;");
 }
 
 function showError(error) {

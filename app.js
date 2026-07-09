@@ -201,7 +201,7 @@ function renderCurrentSlide() {
 
   if (slideId === "daily") {
     slideRoot.innerHTML = renderOverviewSlide({
-      title: "🔥 Daily Liveticker",
+      title: "Daily Liveticker",
       rows: state.data.daily || []
     });
     return;
@@ -209,7 +209,7 @@ function renderCurrentSlide() {
 
   if (slideId === "mtd") {
     slideRoot.innerHTML = renderOverviewSlide({
-      title: "🗓️ Overall standing MTD",
+      title: "Overall standing MTD",
       rows: state.data.mtd || []
     });
     return;
@@ -228,7 +228,9 @@ function renderLast6WeeksSlide(rows) {
     .filter(row => String(row["Calendar Week"] || "").startsWith("CW"))
     .sort((a, b) => Number(b["Weeks from Now"]) - Number(a["Weeks from Now"]));
 
-  const allTimeRow = rows.find(row => String(row["Calendar Week"] || "").toLowerCase() === "all time") || {};
+  const allTimeRow = rows.find(row => {
+    return String(row["Calendar Week"] || "").toLowerCase() === "all time";
+  }) || {};
 
   return `
     <main class="slide">
@@ -265,12 +267,13 @@ function renderLast6MetricRow({ metric, cssClass, rows, total }) {
 
       <div class="last6-chart-card">
         <div class="last6-chart">
-          ${rows.map(row => {
+          ${rows.map((row, index) => {
             const value = Number(row[metric] || 0);
-            const height = Math.max((value / max) * 100, value > 0 ? 8 : 2);
+            const height = Math.max((value / max) * 100, value > 0 ? 8 : 0);
+            const isLatest = index === rows.length - 1;
 
             return `
-              <div class="last6-bar-wrap">
+              <div class="last6-bar-wrap ${isLatest ? "latest" : ""}">
                 <div class="last6-value ${cssClass}-color">${formatNumber(value)}</div>
                 <div class="bar last6-bar" style="height: ${height}%;"></div>
                 <div class="last6-label">${escapeHtml(row["Calendar Week"])}</div>
@@ -289,11 +292,36 @@ function renderLast6MetricRow({ metric, cssClass, rows, total }) {
 
 function renderOverviewSlide({ title, rows }) {
   const metrics = [
-    { label: "PreSales Booking", key: "PreSales", cssClass: "pre" },
-    { label: "Booked SC1", key: "SC1 Booked", cssClass: "pre" },
-    { label: "Successful SC1", key: "SC1 Successful", cssClass: "successful" },
-    { label: "IDV", key: "IDV", cssClass: "idv" },
-    { label: "TBK", key: "TBK", cssClass: "tbk" }
+    {
+      label: "PreSales Booking",
+      key: "PreSales",
+      cssClass: "pre",
+      lineClass: "pre-line"
+    },
+    {
+      label: "Booked SC1",
+      key: "SC1 Booked",
+      cssClass: "pre",
+      lineClass: "pre-line"
+    },
+    {
+      label: "Successful SC1",
+      key: "SC1 Successful",
+      cssClass: "successful",
+      lineClass: "successful-line"
+    },
+    {
+      label: "IDV",
+      key: "IDV",
+      cssClass: "idv",
+      lineClass: "idv-line"
+    },
+    {
+      label: "TBK",
+      key: "TBK",
+      cssClass: "tbk",
+      lineClass: "tbk-line"
+    }
   ];
 
   const teamsToShow = window.DASHBOARD_CONFIG.TEAMS_TO_SHOW || ["NOVA", "VF", "MHM"];
@@ -303,15 +331,13 @@ function renderOverviewSlide({ title, rows }) {
     .sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
 
   return `
-    <main class="slide">
-      <section class="overview-title">
-        <span>${escapeHtml(title)}</span>
-      </section>
+    <main class="slide overview-agency-slide">
+      <section class="overview-title">${escapeHtml(title)}</section>
 
-      <section class="overview-table">
-        <div></div>
-        <div class="header-cell header-total">TOTAL</div>
-        ${teamsToShow.map(team => `<div class="header-cell team-header">${escapeHtml(team)}</div>`).join("")}
+      <section class="overview-agency-table">
+        <div class="head-spacer"></div>
+        <div class="total-head">TOTAL</div>
+        ${teamsToShow.map(team => `<div class="team-head">${escapeHtml(team)}</div>`).join("")}
 
         ${metrics.map(metric => renderOverviewMetricRow(metric, filteredRows, teamsToShow)).join("")}
       </section>
@@ -329,21 +355,26 @@ function renderOverviewMetricRow(metric, rows, teamsToShow) {
   const max = Math.max(...values, 1);
 
   return `
-    <div class="overview-row-label ${metric.cssClass}">${escapeHtml(metric.label)}</div>
-    <div class="total-value ${metric.cssClass}-color">${formatNumber(total)}</div>
+    <div class="overview-line ${metric.lineClass}">
+      <div class="overview-metric-label">${escapeHtml(metric.label)}</div>
+      <div class="overview-total-number">${formatNumber(total)}</div>
 
-    ${values.map(value => {
-      const height = Math.max((value / max) * 70, value > 0 ? 10 : 0);
+      <div class="overview-team-group">
+        ${values.map(value => {
+          const ratio = max > 0 ? value / max : 0;
+          const height = value > 0 ? Math.max(ratio * 48, 8) : 0;
 
-      return `
-        <div class="overview-chart-cell ${metric.cssClass}">
-          <div class="overview-bar-wrap">
-            <div class="overview-bar-value bar-value">${formatNumber(value)}</div>
-            ${value > 0 ? `<div class="bar overview-bar" style="height: ${height}px;"></div>` : ""}
-          </div>
-        </div>
-      `;
-    }).join("")}
+          return `
+            <div class="overview-team-box">
+              <div class="overview-mini-chart" style="--p: ${ratio.toFixed(2)};">
+                <div class="overview-mini-value">${formatNumber(value)}</div>
+                <div class="overview-mini-bar" style="height: ${height}px;"></div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
   `;
 }
 
@@ -378,6 +409,7 @@ function renderTeamSlide(teamName, rows) {
   const sortedRows = [...rows].sort((a, b) => Number(b.Sort || 0) - Number(a.Sort || 0));
 
   const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
+
   const weekRows = sortedRows
     .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
     .sort((a, b) => getWeekNumber(a.CW) - getWeekNumber(b.CW));
@@ -461,13 +493,11 @@ function renderTeamChartCard({ cssClass, rows, valueKey, labelKey, weekly }) {
       <div class="mini-chart ${weekly ? "weekly-chart" : ""}">
         ${validRows.map((row, index) => {
           const value = Number(row[valueKey] || 0);
-          const height = Math.max((value / max) * 100, value > 0 ? 7 : 2);
-          const isLatest = weekly && index === validRows.length - 1;
-          const isMax = weekly && value === max;
+          const height = Math.max((value / max) * 100, value > 0 ? 7 : 0);
+          const isLatest = index === validRows.length - 1;
 
           return `
-            <div class="bar-wrap ${isLatest ? "latest" : ""} ${isMax ? "max" : ""}">
-              ${isLatest ? `<div class="latest-pill">latest</div>` : ""}
+            <div class="bar-wrap ${isLatest ? "latest" : ""}">
               <div class="bar-value">${formatNumber(value)}</div>
               <div class="bar team-bar" style="height: ${height}%;"></div>
               <div class="bar-label">${escapeHtml(row[labelKey] || "")}</div>
@@ -508,7 +538,7 @@ function renderFallbackSlide(slideId) {
   return `
     <main class="slide">
       <section class="overview-title">
-        <span>Slide not configured: ${escapeHtml(slideId)}</span>
+        ${escapeHtml(slideId)}
       </section>
     </main>
   `;

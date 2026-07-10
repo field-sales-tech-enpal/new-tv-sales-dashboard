@@ -302,7 +302,7 @@ function renderOverviewSlide({ title, rows }) {
       label: "Booked SC1",
       key: "SC1 Booked",
       cssClass: "pre",
-      lineClass: "pre-line"
+      lineClass: "pre-line-alt"
     },
     {
       label: "Successful SC1",
@@ -362,13 +362,13 @@ function renderOverviewMetricRow(metric, rows, teamsToShow) {
       <div class="overview-team-group">
         ${values.map(value => {
           const ratio = max > 0 ? value / max : 0;
-          const height = value > 0 ? Math.max(ratio * 48, 8) : 0;
+          const height = value > 0 ? Math.max(ratio * 100, 10) : 0;
 
           return `
             <div class="overview-team-box">
               <div class="overview-mini-chart" style="--p: ${ratio.toFixed(2)};">
                 <div class="overview-mini-value">${formatNumber(value)}</div>
-                <div class="overview-mini-bar" style="height: ${height}px;"></div>
+                <div class="overview-mini-bar" style="height: ${height}%;"></div>
               </div>
             </div>
           `;

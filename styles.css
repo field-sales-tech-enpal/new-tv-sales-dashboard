@@ -225,10 +225,6 @@ body {
 
 /* =========================================================
    METRIC COLORS
-   PreSales + Booked SC1 = light yellow
-   Successful SC1 = yellow
-   IDV = light blue
-   TBK = dark blue
 ========================================================= */
 
 .pre-color,
@@ -303,7 +299,7 @@ body {
 .last6-header {
   display: grid;
   grid-template-columns:
-    clamp(90px, 9vw, 150px)
+    clamp(70px, 6.5vw, 110px)
     minmax(0, 1fr)
     clamp(140px, 12vw, 220px);
   column-gap: clamp(18px, 2vw, 28px);
@@ -336,7 +332,7 @@ body {
   min-height: 0;
   display: grid;
   grid-template-columns:
-    clamp(90px, 9vw, 150px)
+    clamp(70px, 6.5vw, 110px)
     minmax(0, 1fr)
     clamp(140px, 12vw, 220px);
   column-gap: clamp(18px, 2vw, 28px);
@@ -347,9 +343,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: clamp(34px, 4.7vh, 58px);
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-size: clamp(22px, 3vh, 36px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  opacity: 0.82;
 }
 
 .last6-chart-card,
@@ -403,6 +400,11 @@ body {
   border-radius: 14px 14px 0 0;
 }
 
+.last6-row.idv .last6-bar,
+.last6-row.tbk .last6-bar {
+  width: clamp(56px, 4vw, 78px);
+}
+
 .last6-label {
   font-size: clamp(10px, 1vh, 13px);
   margin-top: 6px;
@@ -418,9 +420,9 @@ body {
 }
 
 .last6-total {
-  font-size: clamp(46px, 6vh, 76px);
-  font-weight: 900;
-  letter-spacing: -0.055em;
+  font-size: clamp(38px, 5.2vh, 58px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
   line-height: 1;
   white-space: nowrap;
 }
@@ -471,19 +473,19 @@ body {
 }
 
 .overview-agency-table .total-head {
-  font-size: clamp(15px, 2vh, 28px);
-  font-weight: 900;
-  font-style: italic;
-  color: var(--enpal-navy);
+  font-size: clamp(14px, 1.8vh, 24px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  color: rgba(5, 40, 74, 0.6);
 }
 
 .overview-agency-table .team-head {
-  border-radius: 12px 12px 0 0;
+  border-radius: 16px;
   background: linear-gradient(135deg, var(--enpal-navy), var(--enpal-navy-2));
   color: #ffffff;
-  font-size: clamp(15px, 2vh, 28px);
-  font-weight: 900;
-  box-shadow: 0 10px 22px rgba(5, 40, 74, 0.18);
+  font-size: clamp(14px, 1.8vh, 24px);
+  font-weight: 800;
 }
 
 .overview-line {
@@ -500,6 +502,11 @@ body {
   column-gap: clamp(12px, 1.5vw, 22px);
 }
 
+.overview-line:not(:last-of-type) {
+  border-bottom: 1px solid rgba(5, 40, 74, 0.06);
+  padding-bottom: clamp(8px, 1.1vh, 12px);
+}
+
 .overview-metric-label,
 .overview-total-number,
 .overview-team-group {
@@ -510,9 +517,9 @@ body {
 .overview-metric-label {
   display: flex;
   align-items: center;
-  padding-left: 8px;
+  padding-left: 18%;
   font-size: clamp(15px, 1.85vh, 24px);
-  font-weight: 900;
+  font-weight: 700;
   color: var(--enpal-navy);
 }
 
@@ -522,8 +529,8 @@ body {
   justify-content: center;
   font-size: clamp(28px, 4.7vh, 56px);
   line-height: 1;
-  font-weight: 900;
-  letter-spacing: -0.045em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 .overview-team-group {
@@ -533,10 +540,10 @@ body {
   align-items: stretch;
   overflow: hidden;
 
-  background: rgba(255, 255, 255, 0.84);
-  border: 1.5px solid var(--enpal-border-strong);
-  border-radius: 22px;
-  box-shadow: 0 14px 30px rgba(5, 40, 74, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 6px 16px rgba(5, 40, 74, 0.06);
 }
 
 .overview-team-box {
@@ -566,13 +573,11 @@ body {
 }
 
 .overview-mini-bar {
-  width: clamp(60px, 5vw, 90px);
+  width: clamp(80px, 7vw, 116px);
   max-height: none;
   min-height: 0;
-  border-radius: 10px 10px 0 0;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
-    0 calc(var(--p, 0.55) * 4px) calc(var(--p, 0.55) * 10px) rgba(5, 40, 74, 0.08);
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
 }
 
 .overview-line.pre-line .overview-mini-value,
@@ -582,6 +587,15 @@ body {
 
 .overview-line.pre-line .overview-mini-bar {
   background: var(--metric-orange);
+}
+
+.overview-line.pre-line-alt .overview-mini-value,
+.overview-line.pre-line-alt .overview-total-number {
+  color: var(--enpal-orange-dark);
+}
+
+.overview-line.pre-line-alt .overview-mini-bar {
+  background: var(--enpal-orange-dark);
 }
 
 .overview-line.successful-line .overview-mini-value,
@@ -613,7 +627,6 @@ body {
 
 /* =========================================================
    3. AGENCY DETAIL SLIDES
-   NOVA / VF / MHM
 ========================================================= */
 
 .slide:has(.team-top) {
@@ -639,7 +652,7 @@ body {
 }
 
 .summary-card {
-  min-height: clamp(58px, 7vh, 86px);
+  min-height: clamp(66px, 7.8vh, 96px);
   height: 100%;
   display: flex;
   align-items: center;
@@ -677,16 +690,26 @@ body {
 }
 
 .summary-number {
-  min-width: clamp(78px, 7vw, 110px);
-  height: clamp(34px, 4.2vh, 46px);
+  min-width: clamp(90px, 8vw, 130px);
+  height: clamp(46px, 5.6vh, 64px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #ffffff, #f7fafc);
   border: 2px solid rgba(5, 40, 74, 0.16);
-  border-radius: 10px;
-  font-size: clamp(20px, 2.1vh, 28px);
+  border-radius: 12px;
+  font-size: clamp(28px, 3.3vh, 42px);
   font-weight: 900;
+}
+
+.summary-number.idv-color {
+  background: linear-gradient(180deg, rgba(90, 167, 255, 0.16), rgba(90, 167, 255, 0.05));
+  border-color: rgba(90, 167, 255, 0.4);
+}
+
+.summary-number.tbk-color {
+  background: linear-gradient(180deg, rgba(5, 40, 74, 0.12), rgba(5, 40, 74, 0.04));
+  border-color: rgba(5, 40, 74, 0.32);
 }
 
 .team-content {
@@ -716,11 +739,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px 12px 0 0;
-  background: linear-gradient(135deg, var(--enpal-navy), var(--enpal-navy-2));
-  color: #ffffff;
-  font-size: clamp(19px, 2.1vh, 28px);
-  font-weight: 900;
+  border-radius: 14px;
+  background: rgba(5, 40, 74, 0.16);
+  color: var(--enpal-navy);
+  font-size: clamp(17px, 1.9vh, 25px);
+  font-weight: 800;
 }
 
 .metric-labels,
@@ -790,14 +813,14 @@ body {
   font-weight: 900;
   margin-bottom: 4px;
   line-height: 1;
-  opacity: 0.78;
+  opacity: 0.85;
 }
 
 .team-bar {
   width: clamp(26px, 2vw, 38px);
   max-height: none;
   border-radius: 14px 14px 0 0;
-  opacity: 0.72;
+  opacity: 0.82;
 }
 
 .weekly-chart .team-bar {
@@ -809,14 +832,11 @@ body {
   font-weight: 700;
   margin-top: 4px;
   white-space: nowrap;
-  opacity: 0.78;
+  opacity: 0.85;
 }
 
 .weekly-card {
-  background:
-    linear-gradient(to top, rgba(5, 40, 74, 0.045) 1px, transparent 1px),
-    rgba(255, 255, 255, 0.82);
-  background-size: 100% 24px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .chart-card .bar-wrap.latest .team-bar {
@@ -830,6 +850,7 @@ body {
 .chart-card .bar-wrap.latest .bar-label {
   opacity: 1;
   font-weight: 900;
+  font-size: 106%;
 }
 
 .latest-pill {

@@ -654,6 +654,8 @@ body {
 .summary-card {
   min-height: clamp(66px, 7.8vh, 96px);
   height: 100%;
+  width: 50%;
+  margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -850,7 +852,6 @@ body {
 .chart-card .bar-wrap.latest .bar-label {
   opacity: 1;
   font-weight: 900;
-  font-size: 106%;
 }
 
 .latest-pill {

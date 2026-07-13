@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>TV Sales Dashboard Preview v2</title>
+<style>
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap");
 
 /* =========================================================
@@ -32,6 +38,11 @@
   --white: #ffffff;
   --text: var(--enpal-navy);
   --bg: #e9eef4;
+
+  --font-display: "Poppins", Arial, sans-serif;
+  --font-mono: "Poppins", Arial, sans-serif;
+
+  --hairline: rgba(5, 40, 74, 0.1);
 }
 
 html,
@@ -46,7 +57,7 @@ body {
     radial-gradient(circle at 15% 10%, rgba(255, 214, 90, 0.18), transparent 32%),
     radial-gradient(circle at 85% 0%, rgba(63, 125, 241, 0.14), transparent 30%),
     #e9eef4;
-  font-family: "Poppins", Arial, sans-serif;
+  font-family: var(--font-display);
   color: var(--enpal-navy);
 }
 
@@ -86,8 +97,8 @@ body {
   isolation: isolate;
 
   padding:
-    clamp(24px, 3.2vh, 48px)
-    clamp(36px, 3.8vw, 72px);
+    clamp(28px, 3.6vh, 54px)
+    clamp(44px, 4.4vw, 84px);
 
   background:
     linear-gradient(
@@ -97,8 +108,8 @@ body {
       rgba(247, 250, 252, 1) 100%
     );
 
-  border-radius: 0;
-  box-shadow: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .slide::before {
@@ -110,7 +121,7 @@ body {
   right: clamp(-220px, -9vw, -90px);
   background: radial-gradient(
     circle,
-    rgba(255, 214, 90, 0.26),
+    rgba(255, 214, 90, 0.24),
     rgba(255, 214, 90, 0) 68%
   );
   z-index: -1;
@@ -125,7 +136,7 @@ body {
   bottom: clamp(-420px, -20vw, -220px);
   background: radial-gradient(
     circle,
-    rgba(63, 125, 241, 0.13),
+    rgba(63, 125, 241, 0.11),
     rgba(63, 125, 241, 0) 70%
   );
   z-index: -1;
@@ -188,96 +199,170 @@ body {
 }
 
 /* =========================================================
-   TYPOGRAPHY + SHARED TITLES
+   SHARED MASTHEAD (slide title)
 ========================================================= */
 
-.last6-title,
-.overview-title,
-.team-title {
+.slide-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(16px, 2vw, 32px);
+  margin-bottom: clamp(22px, 3vh, 40px);
+}
+
+.slide-title {
   position: relative;
   display: inline-block;
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.055em;
   color: var(--enpal-navy);
+  font-size: clamp(36px, 5vh, 62px);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  margin: 0;
 }
 
-.last6-title::after,
-.overview-title::after,
-.team-title::after {
+.slide-title::after {
   content: ".";
-  color: var(--enpal-orange);
+  color: var(--enpal-orange-dark);
 }
 
-.last6-title::before,
-.overview-title::before,
-.team-title::before {
+.slide-title::before {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -8px;
-  width: 64px;
+  bottom: -9px;
+  width: 58px;
   height: 5px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--enpal-orange), rgba(255, 214, 90, 0));
+  background: linear-gradient(90deg, var(--enpal-orange-dark), rgba(255, 200, 61, 0));
+}
+
+.slide-head-meta {
+  font-family: var(--font-mono);
+  font-size: clamp(13px, 1.5vh, 18px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.45);
+  white-space: nowrap;
 }
 
 /* =========================================================
-   METRIC COLORS
+   FUNNEL LADDER (signature element)
+   5 stages: PreSales(1) -> Booked SC1(2) -> Successful SC1(3)
+             -> IDV(4) -> TBK(5)
+   Lit rungs = how deep this metric sits in the pipeline.
 ========================================================= */
 
-.pre-color,
-.pre .bar-value,
-.pre .empty-value {
-  color: var(--metric-orange);
+.funnel-ladder {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  width: 7px;
+  height: clamp(30px, 3.6vh, 42px);
+  flex: 0 0 auto;
 }
 
-.pre .bar {
-  background: var(--metric-orange);
+.funnel-ladder .rung {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(5, 40, 74, 0.1);
 }
 
-.successful-color,
-.successful .bar-value,
-.successful .empty-value {
-  color: var(--metric-yellow);
+.funnel-ladder .rung.lit {
+  background: linear-gradient(180deg, var(--enpal-orange-dark), var(--enpal-navy));
 }
 
-.successful .bar {
-  background: var(--metric-yellow);
+/* =========================================================
+   SHARED STAT-ROW LIST
+   Used on Last 6 Weeks, Daily Liveticker, Overall MTD
+========================================================= */
+
+.metric-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.idv-color,
-.idv .bar-value,
-.idv .empty-value {
-  color: var(--metric-light-blue);
+.stat-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  align-items: stretch;
+  column-gap: clamp(20px, 2.2vw, 36px);
 }
 
-.idv .bar {
-  background: var(--metric-light-blue);
+.stat-row:not(:last-child) {
+  border-bottom: 1px solid var(--hairline);
 }
 
-.tbk-color,
-.tbk .bar-value,
-.tbk .empty-value {
-  color: var(--metric-dark-blue);
+.row-label {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.2vw, 18px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--enpal-navy);
+  min-width: 0;
+  height: 100%;
 }
 
-.tbk .bar {
-  background: var(--metric-dark-blue);
+.row-label span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bar {
-  border: none;
+.row-total {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* bars shared by all charts */
+
+.bars {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(5, 40, 74, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(5, 40, 74, 0.08);
+}
+
+.bar-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
   transform-origin: bottom;
-  animation: grow 850ms ease forwards;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  animation: grow 700ms ease forwards;
 }
 
 @keyframes grow {
   from {
     transform: scaleY(0);
-    opacity: 0.35;
+    opacity: 0.4;
   }
 
   to {
@@ -286,576 +371,297 @@ body {
   }
 }
 
+.bar-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.bar-tick {
+  font-size: clamp(9px, 0.95vh, 12px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-top: 6px;
+  white-space: nowrap;
+  color: rgba(5, 40, 74, 0.5);
+}
+
+/* metric color tokens */
+
+.tone-pre {
+  color: var(--metric-orange);
+}
+.tone-pre .bar-fill {
+  background: var(--metric-orange);
+}
+
+.tone-pre-alt {
+  color: var(--enpal-orange-dark);
+}
+.tone-pre-alt .bar-fill {
+  background: var(--enpal-orange-dark);
+}
+
+.tone-successful {
+  color: var(--metric-yellow);
+}
+.tone-successful .bar-fill {
+  background: var(--metric-yellow);
+}
+
+.tone-idv {
+  color: var(--metric-light-blue);
+}
+.tone-idv .bar-fill {
+  background: var(--metric-light-blue);
+}
+
+.tone-tbk {
+  color: var(--metric-dark-blue);
+}
+.tone-tbk .bar-fill {
+  background: var(--metric-dark-blue);
+}
+
 /* =========================================================
    1. LAST 6 WEEKS
 ========================================================= */
 
-.slide:has(.last6-header) {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  align-content: stretch;
-}
-
-.last6-header {
-  display: grid;
+.last6-slide .stat-row {
   grid-template-columns:
-    clamp(70px, 6.5vw, 110px)
+    clamp(150px, 13vw, 220px)
     minmax(0, 1fr)
-    clamp(140px, 12vw, 220px);
-  column-gap: clamp(18px, 2vw, 28px);
-  align-items: center;
-  margin-bottom: clamp(18px, 2.4vh, 30px);
+    clamp(140px, 12vw, 210px);
 }
 
-.last6-title {
-  grid-column: 2;
-  font-size: clamp(34px, 4.8vh, 60px);
+.last6-slide .row-label {
+  font-size: clamp(24px, 3.2vh, 40px);
 }
 
-.last6-total-title {
-  grid-column: 3;
-  text-align: center;
-  font-size: clamp(18px, 2.2vh, 30px);
-  font-weight: 900;
+.last6-slide .row-total {
+  font-size: clamp(38px, 5.4vh, 62px);
 }
 
-.last6-rows {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: clamp(20px, 2.8vh, 34px);
+.last6-slide .bars {
+  padding: clamp(14px, 1.8vh, 22px) clamp(16px, 1.6vw, 26px) clamp(10px, 1.4vh, 16px);
+  gap: clamp(14px, 2vw, 30px);
 }
 
-.last6-row {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-columns:
-    clamp(70px, 6.5vw, 110px)
-    minmax(0, 1fr)
-    clamp(140px, 12vw, 220px);
-  column-gap: clamp(18px, 2vw, 28px);
-  align-items: stretch;
+.last6-slide .bar-fill {
+  min-height: 2px;
 }
 
-.last6-metric {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  font-size: clamp(22px, 3vh, 36px);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  opacity: 0.82;
+.last6-slide .bar-value {
+  font-size: clamp(14px, 1.5vh, 19px);
 }
 
-.last6-chart-card,
-.last6-total-card {
-  height: 100%;
-  min-height: 0;
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1.5px solid var(--enpal-border);
-  box-shadow: 0 14px 34px var(--enpal-shadow);
-}
-
-.last6-chart-card {
-  display: flex;
-  align-items: flex-end;
-  padding:
-    clamp(18px, 2vh, 24px)
-    clamp(18px, 2vw, 24px)
-    clamp(14px, 1.8vh, 20px);
-}
-
-.last6-chart {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: clamp(12px, 2vw, 32px);
-  padding: 0 14px;
-}
-
-.last6-bar-wrap {
-  flex: 1;
-  height: 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.last6-value {
-  font-size: clamp(14px, 1.4vh, 18px);
-  font-weight: 900;
-  margin-bottom: 7px;
-}
-
-.last6-bar {
-  width: clamp(44px, 3vw, 62px);
-  border-radius: 14px 14px 0 0;
-}
-
-.last6-row.idv .last6-bar,
-.last6-row.tbk .last6-bar {
-  width: clamp(56px, 4vw, 78px);
-}
-
-.last6-label {
-  font-size: clamp(10px, 1vh, 13px);
-  margin-top: 6px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.last6-total-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #ffffff, #f7fafc);
-}
-
-.last6-total {
-  font-size: clamp(38px, 5.2vh, 58px);
-  font-weight: 700;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  white-space: nowrap;
+.last6-slide .bar-tick {
+  font-size: clamp(11px, 1.1vh, 14px);
 }
 
 /* =========================================================
    2. DAILY LIVETICKER + OVERALL MTD
 ========================================================= */
 
-.slide.overview-agency-slide {
+.overview-slide .table-head {
+  flex: 0 0 auto;
   display: grid;
-  grid-template-rows: auto 1fr;
-  align-content: stretch;
-  height: 100%;
-  min-height: 0;
-}
-
-.overview-title {
-  margin-bottom: clamp(14px, 1.8vh, 24px);
-  font-size: clamp(34px, 4.8vh, 60px);
-}
-
-.overview-agency-table {
-  height: 100%;
-  min-height: 0;
-  width: 100%;
-  display: grid;
-
   grid-template-columns:
-    clamp(165px, 15vw, 260px)
-    clamp(90px, 8vw, 150px)
-    repeat(3, minmax(0, 1fr));
-
-  grid-template-rows:
-    clamp(48px, 5.3vh, 62px)
-    repeat(5, minmax(0, 1fr));
-
-  column-gap: clamp(12px, 1.5vw, 22px);
-  row-gap: clamp(10px, 1.3vh, 16px);
+    clamp(200px, 17vw, 300px)
+    clamp(100px, 8vw, 150px)
+    minmax(0, 1fr);
+  column-gap: clamp(20px, 2.2vw, 36px);
+  align-items: end;
+  padding-bottom: clamp(12px, 1.6vh, 18px);
+  border-bottom: 2px solid var(--hairline);
+  margin-bottom: clamp(6px, 0.8vh, 10px);
 }
 
-.overview-agency-table .head-spacer,
-.overview-agency-table .total-head,
-.overview-agency-table .team-head {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.overview-agency-table .total-head {
-  font-size: clamp(14px, 1.8vh, 24px);
-  font-weight: 800;
-  font-style: normal;
-  letter-spacing: 0.02em;
-  color: rgba(5, 40, 74, 0.6);
-}
-
-.overview-agency-table .team-head {
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--enpal-navy), var(--enpal-navy-2));
-  color: #ffffff;
-  font-size: clamp(14px, 1.8vh, 24px);
-  font-weight: 800;
-}
-
-.overview-line {
-  grid-column: 1 / -1;
-  height: 100%;
-  min-height: 0;
-  display: grid;
-
-  grid-template-columns:
-    clamp(165px, 15vw, 260px)
-    clamp(90px, 8vw, 150px)
-    repeat(3, minmax(0, 1fr));
-
-  column-gap: clamp(12px, 1.5vw, 22px);
-}
-
-.overview-line:not(:last-of-type) {
-  border-bottom: 1px solid rgba(5, 40, 74, 0.06);
-  padding-bottom: clamp(8px, 1.1vh, 12px);
-}
-
-.overview-metric-label,
-.overview-total-number,
-.overview-team-group {
-  height: 100%;
-  min-height: 0;
-}
-
-.overview-metric-label {
-  display: flex;
-  align-items: center;
-  padding-left: 18%;
-  font-size: clamp(15px, 1.85vh, 24px);
+.overview-slide .table-head-total {
+  font-family: var(--font-display);
+  font-size: clamp(12px, 1.3vh, 16px);
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.42);
+  text-align: right;
+}
+
+.overview-slide .table-head-teams {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  text-align: center;
+}
+
+.overview-slide .table-head-teams div {
+  font-size: clamp(20px, 2.6vh, 32px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--enpal-navy);
 }
 
-.overview-total-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(28px, 4.7vh, 56px);
-  line-height: 1;
-  font-weight: 600;
-  letter-spacing: -0.03em;
+.overview-slide .stat-row {
+  grid-template-columns:
+    clamp(200px, 17vw, 300px)
+    clamp(100px, 8vw, 150px)
+    minmax(0, 1fr);
 }
 
-.overview-team-group {
-  grid-column: 3 / 6;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
-  overflow: hidden;
-
-  background: rgba(255, 255, 255, 0.55);
-  border: none;
-  border-radius: 18px;
-  box-shadow: 0 6px 16px rgba(5, 40, 74, 0.06);
+.overview-slide .row-label {
+  font-size: clamp(16px, 1.9vh, 24px);
 }
 
-.overview-team-box {
+.overview-slide .row-total {
+  font-size: clamp(24px, 3.4vh, 42px);
+}
+
+.overview-slide .team-bars {
   height: 100%;
   min-height: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: clamp(8px, 1vh, 14px) 10px 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(5, 40, 74, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(5, 40, 74, 0.08);
+  padding-top: clamp(10px, 1.4vh, 16px);
 }
 
-.overview-mini-chart {
-  width: 100%;
+.overview-slide .team-cell {
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
+  padding: 0 clamp(10px, 1.4vw, 26px) clamp(10px, 1.4vh, 16px);
 }
 
-.overview-mini-value {
-  font-size: clamp(11px, 1.15vh, 16px);
-  font-weight: 900;
-  margin-bottom: 5px;
-  line-height: 1;
+.overview-slide .team-cell .bar-fill {
+  width: clamp(46px, 4vw, 72px);
 }
 
-.overview-mini-bar {
-  width: clamp(80px, 7vw, 116px);
-  max-height: none;
-  min-height: 0;
-  border-radius: 8px 8px 0 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
-}
-
-.overview-line.pre-line .overview-mini-value,
-.overview-line.pre-line .overview-total-number {
-  color: var(--metric-orange);
-}
-
-.overview-line.pre-line .overview-mini-bar {
-  background: var(--metric-orange);
-}
-
-.overview-line.pre-line-alt .overview-mini-value,
-.overview-line.pre-line-alt .overview-total-number {
-  color: var(--enpal-orange-dark);
-}
-
-.overview-line.pre-line-alt .overview-mini-bar {
-  background: var(--enpal-orange-dark);
-}
-
-.overview-line.successful-line .overview-mini-value,
-.overview-line.successful-line .overview-total-number {
-  color: var(--metric-yellow);
-}
-
-.overview-line.successful-line .overview-mini-bar {
-  background: var(--metric-yellow);
-}
-
-.overview-line.idv-line .overview-mini-value,
-.overview-line.idv-line .overview-total-number {
-  color: var(--metric-light-blue);
-}
-
-.overview-line.idv-line .overview-mini-bar {
-  background: var(--metric-light-blue);
-}
-
-.overview-line.tbk-line .overview-mini-value,
-.overview-line.tbk-line .overview-total-number {
-  color: var(--metric-dark-blue);
-}
-
-.overview-line.tbk-line .overview-mini-bar {
-  background: var(--metric-dark-blue);
+.overview-slide .bar-value {
+  font-size: clamp(13px, 1.35vh, 17px);
 }
 
 /* =========================================================
    3. AGENCY DETAIL SLIDES
 ========================================================= */
 
-.slide:has(.team-top) {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  align-content: stretch;
-  height: 100%;
-  min-height: 0;
+.team-slide .slide-head {
+  align-items: center;
 }
 
-.team-top {
-  display: grid;
-  grid-template-columns: clamp(160px, 15vw, 240px) minmax(0, 1fr);
-  column-gap: clamp(20px, 1.6vw, 24px);
-  align-items: stretch;
-  margin-bottom: clamp(16px, 1.8vh, 24px);
+.team-slide .slide-title {
+  font-size: clamp(44px, 6.4vh, 74px);
 }
 
-.team-title {
+.mtd-chips {
   display: flex;
   align-items: center;
-  font-size: clamp(42px, 5.5vh, 68px);
+  gap: clamp(10px, 1.2vw, 18px);
 }
 
-.summary-card {
-  min-height: clamp(66px, 7.8vh, 96px);
-  height: 100%;
-  width: 50%;
-  margin-left: auto;
+.mtd-chip {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(16px, 2vw, 34px);
-  padding:
-    clamp(8px, 1.2vh, 18px)
-    clamp(16px, 2vw, 34px);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1.5px solid var(--enpal-border);
-  box-shadow: 0 12px 28px var(--enpal-shadow);
+  align-items: baseline;
+  gap: 10px;
+  padding: clamp(8px, 1vh, 12px) clamp(16px, 1.6vw, 24px);
+  border-radius: 999px;
+  background: rgba(5, 40, 74, 0.05);
 }
 
-.summary-title {
-  font-size: clamp(15px, 1.5vh, 20px);
+.mtd-chip .chip-label {
+  font-size: clamp(12px, 1.3vh, 16px);
   font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.summary-values {
-  display: flex;
-  align-items: center;
-  gap: clamp(24px, 4vw, 76px);
+.mtd-chip .chip-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(20px, 2.6vh, 32px);
+  color: var(--enpal-navy);
 }
 
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.mtd-chip.tone-idv {
+  background: rgba(90, 167, 255, 0.14);
 }
 
-.summary-label {
-  font-size: clamp(16px, 1.6vh, 22px);
-  font-weight: 900;
+.mtd-chip.tone-tbk {
+  background: rgba(5, 40, 74, 0.1);
 }
 
-.summary-number {
-  min-width: clamp(90px, 8vw, 130px);
-  height: clamp(46px, 5.6vh, 64px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #ffffff, #f7fafc);
-  border: 2px solid rgba(5, 40, 74, 0.16);
-  border-radius: 12px;
-  font-size: clamp(28px, 3.3vh, 42px);
-  font-weight: 900;
-}
-
-.summary-number.idv-color {
-  background: linear-gradient(180deg, rgba(90, 167, 255, 0.16), rgba(90, 167, 255, 0.05));
-  border-color: rgba(90, 167, 255, 0.4);
-}
-
-.summary-number.tbk-color {
-  background: linear-gradient(180deg, rgba(5, 40, 74, 0.12), rgba(5, 40, 74, 0.04));
-  border-color: rgba(5, 40, 74, 0.32);
-}
-
-.team-content {
-  height: 100%;
-  min-height: 0;
+.team-col-heads {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns:
-    clamp(160px, 15vw, 240px)
+    clamp(210px, 17vw, 300px)
     minmax(0, 1fr)
     minmax(0, 1fr);
-  column-gap: clamp(20px, 1.6vw, 24px);
-  align-items: stretch;
+  column-gap: clamp(24px, 2.4vw, 40px);
+  padding-bottom: clamp(8px, 1.1vh, 12px);
+  border-bottom: 2px solid var(--hairline);
+  margin-bottom: clamp(4px, 0.6vh, 8px);
 }
 
-.team-content > div,
-.chart-column {
-  min-height: 0;
+.team-col-heads .col-head {
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.3vh, 16px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.42);
 }
 
-.section-title,
-.label-spacer {
-  height: clamp(42px, 5.2vh, 58px);
-  margin-bottom: clamp(12px, 1.2vh, 16px);
+.team-slide .stat-row {
+  grid-template-columns:
+    clamp(210px, 17vw, 300px)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
 }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: rgba(5, 40, 74, 0.16);
+.team-slide .row-label {
+  font-size: clamp(17px, 2vh, 25px);
+}
+
+.team-slide .bars {
+  padding: clamp(8px, 1.1vh, 12px) clamp(8px, 1vw, 14px) clamp(6px, 0.9vh, 10px);
+  gap: clamp(4px, 0.7vw, 10px);
+}
+
+.team-slide .bars.weekly {
+  gap: clamp(10px, 1.4vw, 22px);
+}
+
+.team-slide .bar-value {
+  font-size: clamp(9px, 1vh, 12px);
+  opacity: 0.92;
+}
+
+.team-slide .bar-tick {
+  font-size: clamp(8px, 0.85vh, 10px);
+}
+
+.team-slide .bar-col.latest .bar-value {
+  opacity: 1;
+  font-weight: 900;
+}
+
+.team-slide .bar-col.latest .bar-tick {
   color: var(--enpal-navy);
-  font-size: clamp(17px, 1.9vh, 25px);
   font-weight: 800;
 }
 
-.metric-labels,
-.chart-stack {
-  height: calc(100% - clamp(42px, 5.2vh, 58px) - clamp(12px, 1.2vh, 16px));
-  min-height: 0;
-  display: grid;
-  grid-template-rows: repeat(4, minmax(0, 1fr));
-  row-gap: clamp(10px, 1.2vh, 14px);
-}
-
-.metric-label {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  padding-left: 8px;
-  font-size: clamp(16px, 1.9vh, 24px);
-  font-weight: 900;
-}
-
-.chart-card {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  align-items: stretch;
-
-  padding:
-    clamp(10px, 1vh, 14px)
-    clamp(12px, 1.1vw, 18px);
-
-  background: rgba(255, 255, 255, 0.82);
-  border: 1.5px solid var(--enpal-border);
-  border-radius: 22px;
-  box-shadow: 0 12px 28px var(--enpal-shadow);
-}
-
-.mini-chart,
-.weekly-chart {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: clamp(5px, 0.8vw, 14px);
-}
-
-.weekly-chart {
-  gap: clamp(10px, 1.6vw, 28px);
-}
-
-.bar-wrap {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  position: relative;
-}
-
-.bar-value {
-  font-size: clamp(9px, 1vh, 13px);
-  font-weight: 900;
-  margin-bottom: 4px;
-  line-height: 1;
-  opacity: 0.85;
-}
-
-.team-bar {
-  width: clamp(26px, 2vw, 38px);
-  max-height: none;
-  border-radius: 14px 14px 0 0;
-  opacity: 0.82;
-}
-
-.weekly-chart .team-bar {
-  width: clamp(34px, 3vw, 52px);
-}
-
-.bar-label {
-  font-size: clamp(8px, 0.9vh, 11px);
-  font-weight: 700;
-  margin-top: 4px;
-  white-space: nowrap;
-  opacity: 0.85;
-}
-
-.weekly-card {
-  background: rgba(255, 255, 255, 0.82);
-}
-
-.chart-card .bar-wrap.latest .team-bar {
-  opacity: 1;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.38),
-    0 5px 12px rgba(5, 40, 74, 0.10);
-}
-
-.chart-card .bar-wrap.latest .bar-value,
-.chart-card .bar-wrap.latest .bar-label {
-  opacity: 1;
-  font-weight: 900;
-}
-
-.latest-pill {
-  display: none !important;
+.team-slide .bar-col:not(.latest) .bar-fill {
+  opacity: 0.72;
 }
 
 /* =========================================================
@@ -906,9 +712,10 @@ body {
 }
 
 .gif-celebration p {
-  font-size: clamp(22px, 2.7vw, 36px);
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2.4vw, 32px);
   margin: 16px 0 0;
-  line-height: 1.25;
+  line-height: 1.3;
   white-space: pre-wrap;
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.85);
 }
@@ -919,37 +726,11 @@ body {
 
 @media (max-height: 820px) {
   .slide {
-    padding: 22px 28px;
+    padding: 24px 30px;
   }
 
-  .overview-agency-table {
-    row-gap: 8px;
-  }
-
-  .overview-agency-table,
-  .overview-line {
-    column-gap: 12px;
-  }
-
-  .chart-stack,
-  .metric-labels {
-    row-gap: 8px;
-  }
-
-  .team-bar {
-    width: 26px;
-  }
-
-  .weekly-chart .team-bar {
-    width: 34px;
-  }
-
-  .bar-value {
-    font-size: 9px;
-  }
-
-  .bar-label {
-    font-size: 8px;
+  .slide-head {
+    margin-bottom: 18px;
   }
 }
 
@@ -959,82 +740,498 @@ body {
 
 @media (max-width: 900px) {
   .slide {
-    padding: 20px 24px;
+    padding: 22px 24px;
   }
 
-  .overview-agency-table,
-  .overview-line {
-    grid-template-columns:
-      130px
-      90px
-      repeat(3, minmax(0, 1fr));
-    column-gap: 10px;
-  }
-
-  .overview-team-group {
-    grid-column: 3 / 6;
-  }
-
-  .team-top,
-  .team-content {
-    grid-template-columns:
-      125px
-      minmax(0, 1fr)
-      minmax(0, 1fr);
+  .overview-slide .table-head,
+  .overview-slide .stat-row {
+    grid-template-columns: 150px 80px minmax(0, 1fr);
     column-gap: 12px;
   }
 
-  .team-top {
-    grid-template-columns: 115px minmax(0, 1fr);
+  .team-col-heads,
+  .team-slide .stat-row {
+    grid-template-columns: 130px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 12px;
   }
 
-  .summary-card {
-    gap: 16px;
-    padding: 9px 12px;
+  .last6-slide .stat-row {
+    grid-template-columns: 110px minmax(0, 1fr) 120px;
+    column-gap: 12px;
   }
 
-  .summary-values {
-    gap: 18px;
-  }
-
-  .summary-item {
-    gap: 8px;
-  }
-
-  .summary-number {
-    min-width: 64px;
-  }
-
-  .metric-label {
-    font-size: 14px;
-    padding-left: 4px;
-  }
-
-  .section-title {
-    font-size: 16px;
-  }
-
-  .chart-card {
-    padding: 10px 8px;
-  }
-
-  .mini-chart {
-    gap: 5px;
-  }
-
-  .team-bar {
-    width: 24px;
-  }
-
-  .weekly-chart {
-    gap: 8px;
-  }
-
-  .weekly-chart .team-bar {
-    width: 30px;
-  }
-
-  .bar-label {
-    font-size: 6px;
+  .row-label {
+    font-size: 16px !important;
   }
 }
+
+
+#devbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999999;
+  display: flex; gap: 6px; padding: 8px; background: #111; flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+}
+#devbar button {
+  padding: 6px 12px; border: none; border-radius: 6px; background: #333; color: #fff; cursor: pointer; font-size: 12px;
+}
+#devbar button.active { background: #ffbd00; color: #111; font-weight: bold; }
+body { padding-top: 40px; }
+.slide-root { height: calc(100vh - 40px); }
+</style>
+</head>
+<body>
+<div id="devbar"></div>
+<main id="dashboard" class="dashboard">
+  <section id="slideRoot" class="slide-root"></section>
+</main>
+<script>
+const MOCK_DATA = {
+  last6Weeks: [
+    { "Calendar Week": "CW22", "Weeks from Now": 5, IDV: 42, TBK: 18 },
+    { "Calendar Week": "CW23", "Weeks from Now": 4, IDV: 51, TBK: 22 },
+    { "Calendar Week": "CW24", "Weeks from Now": 3, IDV: 38, TBK: 15 },
+    { "Calendar Week": "CW25", "Weeks from Now": 2, IDV: 60, TBK: 27 },
+    { "Calendar Week": "CW26", "Weeks from Now": 1, IDV: 55, TBK: 24 },
+    { "Calendar Week": "CW27", "Weeks from Now": 0, IDV: 67, TBK: 30 },
+    { "Calendar Week": "All time", IDV: 4213, TBK: 1876 }
+  ],
+  daily: [
+    { "Daily Stats": "NOVA", Sort: 1, PreSales: 12, "SC1 Booked": 9, "SC1 Successful": 7, IDV: 5, TBK: 2 },
+    { "Daily Stats": "VF", Sort: 2, PreSales: 8, "SC1 Booked": 6, "SC1 Successful": 4, IDV: 3, TBK: 1 },
+    { "Daily Stats": "MHM", Sort: 3, PreSales: 15, "SC1 Booked": 11, "SC1 Successful": 9, IDV: 6, TBK: 3 }
+  ],
+  mtd: [
+    { "Daily Stats": "NOVA", Sort: 1, PreSales: 210, "SC1 Booked": 165, "SC1 Successful": 130, IDV: 88, TBK: 34 },
+    { "Daily Stats": "VF", Sort: 2, PreSales: 150, "SC1 Booked": 120, "SC1 Successful": 95, IDV: 60, TBK: 21 },
+    { "Daily Stats": "MHM", Sort: 3, PreSales: 260, "SC1 Booked": 200, "SC1 Successful": 165, IDV: 110, TBK: 45 }
+  ],
+  teams: {
+    NOVA: [
+      { Day: "Mon", Sort: 10, "PreSales (days)": 4, "SC1 Successful (days)": 3, "IDV (days)": 2, "TBK (days)": 1 },
+      { Day: "Tue", Sort: 9, "PreSales (days)": 6, "SC1 Successful (days)": 4, "IDV (days)": 3, "TBK (days)": 1 },
+      { Day: "Wed", Sort: 8, "PreSales (days)": 3, "SC1 Successful (days)": 2, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Thu", Sort: 7, "PreSales (days)": 7, "SC1 Successful (days)": 5, "IDV (days)": 4, "TBK (days)": 2 },
+      { Day: "Fri", Sort: 6, "PreSales (days)": 9, "SC1 Successful (days)": 7, "IDV (days)": 5, "TBK (days)": 2 },
+      { Day: "Sat", Sort: 5, "PreSales (days)": 2, "SC1 Successful (days)": 1, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Sun", Sort: 4, "PreSales (days)": 1, "SC1 Successful (days)": 1, "IDV (days)": 0, "TBK (days)": 0 },
+      { Day: "Mon", Sort: 3, "PreSales (days)": 5, "SC1 Successful (days)": 3, "IDV (days)": 2, "TBK (days)": 1 },
+      { Day: "Tue", Sort: 2, "PreSales (days)": 8, "SC1 Successful (days)": 6, "IDV (days)": 4, "TBK (days)": 2 },
+      { Day: "Wed", Sort: 1, "PreSales (days)": 10, "SC1 Successful (days)": 8, "IDV (days)": 6, "TBK (days)": 3 },
+      { CW: "CW23", Sort: 5, "PreSales (weeks)": 28, "SC1 Successful (weeks)": 20, "IDV (weeks)": 14, "TBK (weeks)": 6 },
+      { CW: "CW24", Sort: 4, "PreSales (weeks)": 32, "SC1 Successful (weeks)": 24, "IDV (weeks)": 16, "TBK (weeks)": 7 },
+      { CW: "CW25", Sort: 3, "PreSales (weeks)": 25, "SC1 Successful (weeks)": 18, "IDV (weeks)": 12, "TBK (weeks)": 5 },
+      { CW: "CW26", Sort: 2, "PreSales (weeks)": 38, "SC1 Successful (weeks)": 29, "IDV (weeks)": 20, "TBK (weeks)": 9 },
+      { CW: "CW27", Sort: 1, "PreSales (weeks)": 41, "SC1 Successful (weeks)": 33, "IDV (weeks)": 24, "TBK (weeks)": 11 }
+    ],
+    VF: [
+      { Day: "Mon", Sort: 10, "PreSales (days)": 2, "SC1 Successful (days)": 1, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Tue", Sort: 9, "PreSales (days)": 3, "SC1 Successful (days)": 2, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Wed", Sort: 8, "PreSales (days)": 4, "SC1 Successful (days)": 3, "IDV (days)": 2, "TBK (days)": 1 },
+      { Day: "Thu", Sort: 7, "PreSales (days)": 5, "SC1 Successful (days)": 3, "IDV (days)": 2, "TBK (days)": 1 },
+      { Day: "Fri", Sort: 6, "PreSales (days)": 6, "SC1 Successful (days)": 4, "IDV (days)": 3, "TBK (days)": 1 },
+      { Day: "Sat", Sort: 5, "PreSales (days)": 1, "SC1 Successful (days)": 1, "IDV (days)": 0, "TBK (days)": 0 },
+      { Day: "Sun", Sort: 4, "PreSales (days)": 0, "SC1 Successful (days)": 0, "IDV (days)": 0, "TBK (days)": 0 },
+      { Day: "Mon", Sort: 3, "PreSales (days)": 3, "SC1 Successful (days)": 2, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Tue", Sort: 2, "PreSales (days)": 5, "SC1 Successful (days)": 4, "IDV (days)": 2, "TBK (days)": 1 },
+      { Day: "Wed", Sort: 1, "PreSales (days)": 6, "SC1 Successful (days)": 5, "IDV (days)": 3, "TBK (days)": 1 },
+      { CW: "CW23", Sort: 5, "PreSales (weeks)": 18, "SC1 Successful (weeks)": 13, "IDV (weeks)": 8, "TBK (weeks)": 3 },
+      { CW: "CW24", Sort: 4, "PreSales (weeks)": 20, "SC1 Successful (weeks)": 15, "IDV (weeks)": 9, "TBK (weeks)": 4 },
+      { CW: "CW25", Sort: 3, "PreSales (weeks)": 16, "SC1 Successful (weeks)": 11, "IDV (weeks)": 7, "TBK (weeks)": 2 },
+      { CW: "CW26", Sort: 2, "PreSales (weeks)": 24, "SC1 Successful (weeks)": 18, "IDV (weeks)": 11, "TBK (weeks)": 5 },
+      { CW: "CW27", Sort: 1, "PreSales (weeks)": 26, "SC1 Successful (weeks)": 20, "IDV (weeks)": 13, "TBK (weeks)": 6 }
+    ],
+    MHM: [
+      { Day: "Mon", Sort: 10, "PreSales (days)": 6, "SC1 Successful (days)": 5, "IDV (days)": 3, "TBK (days)": 1 },
+      { Day: "Tue", Sort: 9, "PreSales (days)": 8, "SC1 Successful (days)": 6, "IDV (days)": 4, "TBK (days)": 2 },
+      { Day: "Wed", Sort: 8, "PreSales (days)": 5, "SC1 Successful (days)": 4, "IDV (days)": 3, "TBK (days)": 1 },
+      { Day: "Thu", Sort: 7, "PreSales (days)": 10, "SC1 Successful (days)": 8, "IDV (days)": 6, "TBK (days)": 3 },
+      { Day: "Fri", Sort: 6, "PreSales (days)": 12, "SC1 Successful (days)": 9, "IDV (days)": 7, "TBK (days)": 3 },
+      { Day: "Sat", Sort: 5, "PreSales (days)": 3, "SC1 Successful (days)": 2, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Sun", Sort: 4, "PreSales (days)": 2, "SC1 Successful (days)": 1, "IDV (days)": 1, "TBK (days)": 0 },
+      { Day: "Mon", Sort: 3, "PreSales (days)": 7, "SC1 Successful (days)": 5, "IDV (days)": 4, "TBK (days)": 2 },
+      { Day: "Tue", Sort: 2, "PreSales (days)": 11, "SC1 Successful (days)": 9, "IDV (days)": 6, "TBK (days)": 3 },
+      { Day: "Wed", Sort: 1, "PreSales (days)": 14, "SC1 Successful (days)": 11, "IDV (days)": 8, "TBK (days)": 4 },
+      { CW: "CW23", Sort: 5, "PreSales (weeks)": 40, "SC1 Successful (weeks)": 32, "IDV (weeks)": 22, "TBK (weeks)": 9 },
+      { CW: "CW24", Sort: 4, "PreSales (weeks)": 45, "SC1 Successful (weeks)": 36, "IDV (weeks)": 25, "TBK (weeks)": 10 },
+      { CW: "CW25", Sort: 3, "PreSales (weeks)": 38, "SC1 Successful (weeks)": 29, "IDV (weeks)": 19, "TBK (weeks)": 8 },
+      { CW: "CW26", Sort: 2, "PreSales (weeks)": 52, "SC1 Successful (weeks)": 41, "IDV (weeks)": 28, "TBK (weeks)": 13 },
+      { CW: "CW27", Sort: 1, "PreSales (weeks)": 58, "SC1 Successful (weeks)": 46, "IDV (weeks)": 32, "TBK (weeks)": 15 }
+    ]
+  }
+};
+
+const MOCK_TRIGGER = {
+  "Trigger ID": "T1",
+  Active: "true",
+  Metric: "IDV",
+  Value: "Max Mustermann just closed a new IDV!"
+};
+
+window.DASHBOARD_CONFIG = {
+  TEAMS_TO_SHOW: ["NOVA", "VF", "MHM"],
+  CELEBRATIONS: {
+    IDV: { title: "🎉 NEW IDV 🎉", gif: "" },
+    TBK: { title: "🏆 NEW TBK 🏆", gif: "" }
+  }
+};
+
+
+// ---- render functions: v2 redesign ("Sales Scoreboard") ----
+
+// Funnel stage index for the ladder indicator (1-5, deepest = TBK)
+const FUNNEL_STAGE = {
+  "PreSales": 1,
+  "SC1 Booked": 2,
+  "SC1 Successful": 3,
+  "IDV": 4,
+  "TBK": 5
+};
+
+function renderFunnelLadder(stage) {
+  let rungs = "";
+  for (let i = 1; i <= 5; i++) {
+    rungs += `<div class="rung ${i <= stage ? "lit" : ""}"></div>`;
+  }
+  return `<div class="funnel-ladder">${rungs}</div>`;
+}
+
+function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
+  const max = Math.max(...items.map(row => Number(row[valueKey] || 0)), 1);
+
+  return items.map((row, index) => {
+    const value = Number(row[valueKey] || 0);
+    const height = Math.max((value / max) * 100, value > 0 ? 6 : 0);
+    const isLatest = latestIndex !== undefined ? index === latestIndex : false;
+
+    return `
+      <div class="bar-col ${toneClass} ${isLatest ? "latest" : ""}">
+        <div class="bar-value">${formatNumber(value)}</div>
+        <div class="bar-fill" style="height: ${height}%;"></div>
+        <div class="bar-tick">${escapeHtml(row[labelKey] || "")}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ---------------------------------------------------------
+// 1. LAST 6 WEEKS
+// ---------------------------------------------------------
+
+function renderLast6WeeksSlide(rows) {
+  const weeklyRows = rows
+    .filter(row => String(row["Calendar Week"] || "").startsWith("CW"))
+    .sort((a, b) => Number(b["Weeks from Now"]) - Number(a["Weeks from Now"]));
+
+  const allTimeRow = rows.find(row => {
+    return String(row["Calendar Week"] || "").toLowerCase() === "all time";
+  }) || {};
+
+  return `
+    <main class="slide last6-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">Last 6 Weeks</h1>
+        <div class="slide-head-meta">All time</div>
+      </header>
+
+      <section class="metric-list">
+        ${renderLast6Row({ metric: "IDV", label: "IDV", toneClass: "tone-idv", rows: weeklyRows, total: allTimeRow.IDV })}
+        ${renderLast6Row({ metric: "TBK", label: "TBK", toneClass: "tone-tbk", rows: weeklyRows, total: allTimeRow.TBK })}
+      </section>
+    </main>
+  `;
+}
+
+function renderLast6Row({ metric, label, toneClass, rows, total }) {
+  const stage = FUNNEL_STAGE[metric] || 0;
+
+  return `
+    <div class="stat-row">
+      <div class="row-label ${toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(label)}</span>
+      </div>
+
+      <div class="bars">
+        ${renderBars({
+          items: rows,
+          valueKey: metric,
+          labelKey: "Calendar Week",
+          toneClass,
+          latestIndex: rows.length - 1
+        })}
+      </div>
+
+      <div class="row-total ${toneClass}">${formatNumber(total)}</div>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------
+// 2. DAILY LIVETICKER + OVERALL MTD
+// ---------------------------------------------------------
+
+function renderOverviewSlide({ title, rows }) {
+  const metrics = [
+    { label: "PreSales Booking", key: "PreSales", toneClass: "tone-pre" },
+    { label: "Booked SC1", key: "SC1 Booked", toneClass: "tone-pre-alt" },
+    { label: "Successful SC1", key: "SC1 Successful", toneClass: "tone-successful" },
+    { label: "IDV", key: "IDV", toneClass: "tone-idv" },
+    { label: "TBK", key: "TBK", toneClass: "tone-tbk" }
+  ];
+
+  const teamsToShow = window.DASHBOARD_CONFIG.TEAMS_TO_SHOW || ["NOVA", "VF", "MHM"];
+
+  const filteredRows = rows
+    .filter(row => teamsToShow.includes(String(row["Daily Stats"] || "").toUpperCase()))
+    .sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
+
+  return `
+    <main class="slide overview-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">${escapeHtml(title)}</h1>
+      </header>
+
+      <div class="table-head">
+        <div></div>
+        <div class="table-head-total">Total</div>
+        <div class="table-head-teams">
+          ${teamsToShow.map(team => `<div>${escapeHtml(team)}</div>`).join("")}
+        </div>
+      </div>
+
+      <section class="metric-list">
+        ${metrics.map(metric => renderOverviewRow(metric, filteredRows, teamsToShow)).join("")}
+      </section>
+    </main>
+  `;
+}
+
+function renderOverviewRow(metric, rows, teamsToShow) {
+  const values = teamsToShow.map(team => {
+    const row = rows.find(item => String(item["Daily Stats"] || "").toUpperCase() === team);
+    return Number(row?.[metric.key] || 0);
+  });
+
+  const total = values.reduce((sum, value) => sum + value, 0);
+  const max = Math.max(...values, 1);
+  const stage = FUNNEL_STAGE[metric.key] || 0;
+
+  return `
+    <div class="stat-row">
+      <div class="row-label ${metric.toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(metric.label)}</span>
+      </div>
+
+      <div class="row-total ${metric.toneClass}">${formatNumber(total)}</div>
+
+      <div class="team-bars">
+        ${values.map(value => {
+          const ratio = max > 0 ? value / max : 0;
+          const height = value > 0 ? Math.max(ratio * 100, 6) : 0;
+
+          return `
+            <div class="team-cell ${metric.toneClass}">
+              <div class="bar-value">${formatNumber(value)}</div>
+              <div class="bar-fill" style="height: ${height}%;"></div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------
+// 3. AGENCY DETAIL SLIDES
+// ---------------------------------------------------------
+
+function renderTeamSlide(teamName, rows) {
+  const metrics = [
+    { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
+    { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
+    { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
+    { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
+  ];
+
+  const sortedRows = [...rows].sort((a, b) => Number(b.Sort || 0) - Number(a.Sort || 0));
+  const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
+  const weekRows = sortedRows
+    .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
+    .sort((a, b) => getWeekNumber(a.CW) - getWeekNumber(b.CW));
+
+  const mtdIdv = getTeamMtdValue(teamName, "IDV");
+  const mtdTbk = getTeamMtdValue(teamName, "TBK");
+
+  return `
+    <main class="slide team-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">${escapeHtml(teamName)}</h1>
+
+        <div class="mtd-chips">
+          <div class="mtd-chip tone-idv">
+            <span class="chip-label">IDV MTD</span>
+            <span class="chip-value">${formatNumber(mtdIdv)}</span>
+          </div>
+          <div class="mtd-chip tone-tbk">
+            <span class="chip-label">TBK MTD</span>
+            <span class="chip-value">${formatNumber(mtdTbk)}</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="team-col-heads">
+        <div></div>
+        <div class="col-head">Last 10 days</div>
+        <div class="col-head">Last 5 weeks</div>
+      </div>
+
+      <section class="metric-list">
+        ${metrics.map(metric => renderTeamRow(metric, dayRows, weekRows)).join("")}
+      </section>
+    </main>
+  `;
+}
+
+function renderTeamRow(metric, dayRows, weekRows) {
+  const stage = FUNNEL_STAGE[metric.stageKey] || 0;
+
+  const validDayRows = dayRows.filter(row => {
+    const value = row[metric.dayKey];
+    return value !== "" && value !== null && value !== undefined;
+  });
+
+  const validWeekRows = weekRows.filter(row => {
+    const value = row[metric.weekKey];
+    return value !== "" && value !== null && value !== undefined;
+  });
+
+  return `
+    <div class="stat-row">
+      <div class="row-label ${metric.toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(metric.label)}</span>
+      </div>
+
+      <div class="bars">
+        ${renderBars({
+          items: validDayRows,
+          valueKey: metric.dayKey,
+          labelKey: "Day",
+          toneClass: metric.toneClass,
+          latestIndex: validDayRows.length - 1
+        })}
+      </div>
+
+      <div class="bars weekly">
+        ${renderBars({
+          items: validWeekRows,
+          valueKey: metric.weekKey,
+          labelKey: "CW",
+          toneClass: metric.toneClass,
+          latestIndex: validWeekRows.length - 1
+        })}
+      </div>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------
+// 4. CELEBRATION SLIDE (unchanged structurally)
+// ---------------------------------------------------------
+
+function renderTriggerSlide(trigger) {
+  const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
+  const value = trigger.Value;
+
+  const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
+  const celebration = celebrations[metric] || celebrations.IDV || {};
+
+  const title = celebration.title || `🎉 NEW ${metric} 🎉`;
+  const gif = celebration.gif || "";
+  const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
+
+  const backgroundStyle = gif
+    ? `style="background-image: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('${escapeAttribute(gif)}');"`
+    : "";
+
+  return `
+    <main class="gif-celebration" ${backgroundStyle}>
+      <section class="gif-celebration-card">
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(message)}</p>
+      </section>
+    </main>
+  `;
+}
+
+// ---------------------------------------------------------
+// helpers
+// ---------------------------------------------------------
+
+function hasAnyWeeklyValue(row, metrics) {
+  return metrics.some(metric => {
+    const value = row[metric.weekKey];
+    return value !== "" && value !== null && value !== undefined;
+  });
+}
+
+function getWeekNumber(value) {
+  const match = String(value || "").match(/\d+/);
+  return match ? Number(match[0]) : 0;
+}
+
+function getTeamMtdValue(teamName, metric) {
+  const row = (MOCK_DATA.mtd || []).find(item => {
+    return String(item["Daily Stats"] || "").toUpperCase() === String(teamName).toUpperCase();
+  });
+  return Number(row?.[metric] || 0);
+}
+
+function formatNumber(value) {
+  const number = Number(value || 0);
+  return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 }).format(number).replace(/\./g, " ");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function escapeAttribute(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
+// ---- dev switcher ----
+
+const SLIDES = {
+  "Last 6 Weeks": () => renderLast6WeeksSlide(MOCK_DATA.last6Weeks),
+  "Daily Liveticker": () => renderOverviewSlide({ title: "Daily Liveticker", rows: MOCK_DATA.daily }),
+  "Overall MTD": () => renderOverviewSlide({ title: "Overall standing MTD", rows: MOCK_DATA.mtd }),
+  "NOVA": () => renderTeamSlide("NOVA", MOCK_DATA.teams.NOVA),
+  "VF": () => renderTeamSlide("VF", MOCK_DATA.teams.VF),
+  "MHM": () => renderTeamSlide("MHM", MOCK_DATA.teams.MHM),
+  "Celebration": () => renderTriggerSlide(MOCK_TRIGGER)
+};
+
+const slideRoot = document.getElementById("slideRoot");
+const devbar = document.getElementById("devbar");
+
+function showSlide(name) {
+  slideRoot.innerHTML = SLIDES[name]();
+  [...devbar.children].forEach(btn => btn.classList.toggle("active", btn.textContent === name));
+}
+
+Object.keys(SLIDES).forEach(name => {
+  const btn = document.createElement("button");
+  btn.textContent = name;
+  btn.onclick = () => showSlide(name);
+  devbar.appendChild(btn);
+});
+
+showSlide("Last 6 Weeks");
+
+</script>
+</body>
+</html>

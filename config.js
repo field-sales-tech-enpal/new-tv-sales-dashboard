@@ -13,13 +13,13 @@ window.DASHBOARD_CONFIG = {
 
   CELEBRATIONS: {
     IDV: {
-      title: "🎉 NEW IDV 🎉",
-      gif: "https://media.giphy.com/media/Is1O1TWV0LEJi/giphy.gif",
+      emoji: "🎉",
+      effect: "confetti",
       sound: "sounds/idv.mp3"
     },
     TBK: {
-      title: "🏆 NEW TBK 🏆",
-      gif: "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+      emoji: "🏆",
+      effect: "money",
       sound: "sounds/tbk.mp3"
     }
   }

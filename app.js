@@ -258,10 +258,10 @@ const RETENTION_TEAM_METRICS = [
 // Per-slide config: which metric set to use, and whether to show the
 // MTD chips (Retention isn't tracked in the MTD sheet, so it's hidden there).
 const TEAM_SLIDE_CONFIG = {
-  NOVA: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
-  VF: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
-  MHM: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
-  Retention: { metrics: RETENTION_TEAM_METRICS, showMtd: false }
+  NOVA: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
+  VF: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
+  MHM: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
+  Retention: { metrics: RETENTION_TEAM_METRICS, showMtd: true, mtdSource: "inline" }
 };
 
 function renderFunnelLadder(stage) {
@@ -427,16 +427,27 @@ function renderTeamSlide(teamName, rows) {
     .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
     .sort((a, b) => getWeekNumber(b.CW) - getWeekNumber(a.CW));
 
+  let mtdIdv = 0;
+  let mtdTbk = 0;
+
+  if (config.mtdSource === "inline") {
+    mtdIdv = getInlineMtdValue(rows, "IDV (MTD)");
+    mtdTbk = getInlineMtdValue(rows, "TBK (MTD)");
+  } else {
+    mtdIdv = getTeamMtdValue(teamName, "IDV");
+    mtdTbk = getTeamMtdValue(teamName, "TBK");
+  }
+
   const mtdChips = config.showMtd
     ? `
       <div class="mtd-chips">
         <div class="mtd-chip tone-idv">
           <span class="chip-label">IDV MTD</span>
-          <span class="chip-value">${formatNumber(getTeamMtdValue(teamName, "IDV"))}</span>
+          <span class="chip-value">${formatNumber(mtdIdv)}</span>
         </div>
         <div class="mtd-chip tone-tbk">
           <span class="chip-label">TBK MTD</span>
-          <span class="chip-value">${formatNumber(getTeamMtdValue(teamName, "TBK"))}</span>
+          <span class="chip-value">${formatNumber(mtdTbk)}</span>
         </div>
       </div>
     `
@@ -641,6 +652,11 @@ function getTeamMtdValue(teamName, metric) {
   });
 
   return Number(row?.[metric] || 0);
+}
+
+function getInlineMtdValue(rows, key) {
+  const row = rows.find(item => item[key] !== "" && item[key] !== null && item[key] !== undefined);
+  return Number(row?.[key] || 0);
 }
 
 function hasAnyWeeklyValue(row, metrics) {

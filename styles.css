@@ -97,10 +97,12 @@ body {
   background:
     linear-gradient(
       135deg,
-      rgba(255, 248, 232, 0.92) 0%,
-      rgba(255, 255, 255, 1) 34%,
-      rgba(247, 250, 252, 1) 100%
+      rgba(255, 240, 200, 1) 0%,
+      rgba(255, 250, 240, 1) 28%,
+      rgba(255, 255, 255, 1) 52%,
+      rgba(232, 240, 250, 1) 100%
     );
+  box-shadow: inset 0 0 clamp(80px, 9vw, 160px) rgba(5, 40, 74, 0.1);
 
   display: flex;
   flex-direction: column;
@@ -109,13 +111,13 @@ body {
 .slide::before {
   content: "";
   position: absolute;
-  width: clamp(300px, 28vw, 520px);
-  height: clamp(300px, 28vw, 520px);
-  top: clamp(-260px, -14vw, -130px);
-  right: clamp(-220px, -9vw, -90px);
+  width: clamp(380px, 34vw, 620px);
+  height: clamp(380px, 34vw, 620px);
+  top: clamp(-280px, -15vw, -140px);
+  right: clamp(-240px, -10vw, -100px);
   background: radial-gradient(
     circle,
-    rgba(255, 214, 90, 0.24),
+    rgba(255, 214, 90, 0.5),
     rgba(255, 214, 90, 0) 68%
   );
   z-index: -1;
@@ -124,13 +126,13 @@ body {
 .slide::after {
   content: "";
   position: absolute;
-  width: clamp(420px, 40vw, 760px);
-  height: clamp(420px, 40vw, 760px);
-  left: clamp(-380px, -16vw, -180px);
-  bottom: clamp(-420px, -20vw, -220px);
+  width: clamp(480px, 46vw, 860px);
+  height: clamp(480px, 46vw, 860px);
+  left: clamp(-420px, -18vw, -200px);
+  bottom: clamp(-460px, -22vw, -240px);
   background: radial-gradient(
     circle,
-    rgba(63, 125, 241, 0.11),
+    rgba(63, 125, 241, 0.24),
     rgba(63, 125, 241, 0) 70%
   );
   z-index: -1;

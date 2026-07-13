@@ -7,6 +7,8 @@ const state = {
   triggerRefreshTimer: null,
   triggerTimer: null,
   lastShownTriggerId: localStorage.getItem("lastShownTriggerId") || "",
+  lastShownSignature: localStorage.getItem("lastShownSignature") || "",
+  lastShownAt: Number(localStorage.getItem("lastShownAt") || 0),
   isShowingTrigger: false,
   audioPools: {}
 };
@@ -164,17 +166,50 @@ function checkForTrigger() {
 
   if (triggerId === state.lastShownTriggerId) return;
 
+  // Safety net: if the Trigger ID happens to be regenerated for the same
+  // underlying event (e.g. a timestamp-based ID that changes on every sheet
+  // recalculation), a composite signature + cooldown window catches it even
+  // though the ID looks "new".
+  const signature = buildTriggerSignature(activeTrigger);
+  const now = Date.now();
+  const cooldownMs = Number(
+    state.data?.config?.triggerDedupeCooldownSeconds ||
+    window.DASHBOARD_CONFIG.DEFAULT_TRIGGER_DEDUPE_COOLDOWN_SECONDS ||
+    120
+  ) * 1000;
+
+  const isDuplicateEvent =
+    signature &&
+    signature === state.lastShownSignature &&
+    (now - state.lastShownAt) < cooldownMs;
+
   state.lastShownTriggerId = triggerId;
   localStorage.setItem("lastShownTriggerId", triggerId);
 
+  if (isDuplicateEvent) return;
+
+  state.lastShownSignature = signature;
+  state.lastShownAt = now;
+  localStorage.setItem("lastShownSignature", signature);
+  localStorage.setItem("lastShownAt", String(now));
+
   showTriggerSlide(activeTrigger);
+}
+
+function buildTriggerSignature(trigger) {
+  const type = String(trigger.Type || "").trim().toUpperCase();
+  const metric = String(trigger.Metric || "").trim().toUpperCase();
+  const team = String(trigger.Team || "").trim().toUpperCase();
+  const value = String(trigger.Value || "").trim().toUpperCase();
+  return `${type}|${metric}|${team}|${value}`;
 }
 
 function showTriggerSlide(trigger) {
   state.isShowingTrigger = true;
   slideRoot.innerHTML = renderTriggerSlide(trigger);
+  fitCelebrationTitle();
 
-  const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
+  const metric = String(trigger.Metric || "").toUpperCase();
   playCelebrationSound(metric);
 
   clearTimeout(state.triggerTimer);
@@ -189,6 +224,24 @@ function showTriggerSlide(trigger) {
     state.isShowingTrigger = false;
     renderCurrentSlide();
   }, seconds * 1000);
+}
+
+// Shrinks the celebration title's font-size until it fits on a single line,
+// so long combos like "NEW RETENTION TBK" never wrap.
+function fitCelebrationTitle() {
+  requestAnimationFrame(() => {
+    const h1 = slideRoot.querySelector(".gif-celebration h1");
+    if (!h1) return;
+
+    let size = parseFloat(getComputedStyle(h1).fontSize);
+    let guard = 60;
+
+    while (h1.scrollWidth > h1.clientWidth && size > 22 && guard > 0) {
+      size -= 2;
+      h1.style.fontSize = size + "px";
+      guard -= 1;
+    }
+  });
 }
 
 function renderCurrentSlide() {
@@ -519,28 +572,108 @@ function renderTeamRow(metric, dayRows, weekRows) {
 // 4. CELEBRATION SLIDE (unchanged)
 
 function renderTriggerSlide(trigger) {
-  const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
+  const metric = String(trigger.Metric || "").toUpperCase();
+  const type = String(trigger.Type || "").trim().toUpperCase();
   const value = trigger.Value;
 
   const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
   const celebration = celebrations[metric] || celebrations.IDV || {};
 
-  const title = celebration.title || `🎉 NEW ${metric} 🎉`;
-  const gif = celebration.gif || "";
+  // Type "PV" or "RETENTION" gets prefixed onto the metric in the title;
+  // "HP" (default) or anything else keeps just the metric (IDV/TBK).
+  const typePrefix = (type === "PV" || type === "RETENTION") ? `${type} ` : "";
+  const emoji = celebration.emoji || "🎉";
+  const title = `${emoji} NEW ${typePrefix}${metric} ${emoji}`;
+
+  const isPv = type === "PV";
+  const effect = (isPv && metric === "TBK") ? "sun" : (celebration.effect || "confetti");
+  const themeClass = isPv ? "pv-theme" : "";
   const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
 
-  const backgroundStyle = gif
-    ? `style="background-image: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('${escapeAttribute(gif)}');"`
-    : "";
-
   return `
-    <main class="gif-celebration" ${backgroundStyle}>
+    <main class="gif-celebration ${themeClass}">
+      <div class="particle-field">${renderParticleField(effect)}</div>
       <section class="gif-celebration-card">
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(message)}</p>
       </section>
     </main>
   `;
+}
+
+function renderParticleField(effect) {
+  if (effect === "money") {
+    return renderMoneyParticles(60);
+  }
+  if (effect === "sun") {
+    return renderSunParticles(40);
+  }
+  return renderConfettiParticles(46);
+}
+
+function renderSunParticles(count) {
+  let out = "";
+
+  for (let i = 0; i < count; i++) {
+    const left = (Math.random() * 100).toFixed(1);
+    const delay = (Math.random() * 2.6).toFixed(2);
+    const duration = (3.4 + Math.random() * 2.2).toFixed(2);
+    const size = (24 + Math.random() * 20).toFixed(0);
+    const rotate = (Math.random() * 20 - 10).toFixed(1);
+
+    out += `
+      <span
+        class="sun-piece"
+        style="left: ${left}%; font-size: ${size}px; animation-delay: ${delay}s; animation-duration: ${duration}s; --start-rotate: ${rotate}deg;"
+      >☀️</span>
+    `;
+  }
+
+  return out;
+}
+
+function renderConfettiParticles(count) {
+  const shapes = ["circle", "rect"];
+  const tones = ["tone-a", "tone-b", "tone-c", "tone-d"];
+  let out = "";
+
+  for (let i = 0; i < count; i++) {
+    const left = (Math.random() * 100).toFixed(1);
+    const delay = (Math.random() * 2.6).toFixed(2);
+    const duration = (3.2 + Math.random() * 2.2).toFixed(2);
+    const size = (8 + Math.random() * 10).toFixed(0);
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const tone = tones[Math.floor(Math.random() * tones.length)];
+
+    out += `
+      <span
+        class="confetti-piece ${shape} ${tone}"
+        style="left: ${left}%; width: ${size}px; height: ${size}px; animation-delay: ${delay}s; animation-duration: ${duration}s;"
+      ></span>
+    `;
+  }
+
+  return out;
+}
+
+function renderMoneyParticles(count) {
+  let out = "";
+
+  for (let i = 0; i < count; i++) {
+    const left = (Math.random() * 100).toFixed(1);
+    const delay = (Math.random() * 2.8).toFixed(2);
+    const duration = (3.6 + Math.random() * 2.2).toFixed(2);
+    const rotate = (Math.random() * 16 - 8).toFixed(1);
+
+    out += `
+      <span
+        class="money-bill"
+        style="left: ${left}%; animation-delay: ${delay}s; animation-duration: ${duration}s; --start-rotate: ${rotate}deg;"
+      >€</span>
+    `;
+  }
+
+  return out;
 }
 
 function renderFallbackSlide(slideId) {

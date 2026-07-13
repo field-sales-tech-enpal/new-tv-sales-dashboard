@@ -1,6 +1,6 @@
 const state = {
   data: null,
-  slides: ["last6Weeks", "daily", "mtd", "NOVA", "VF", "MHM"],
+  slides: ["last6Weeks", "daily", "mtd", "NOVA", "VF", "MHM", "Retention"],
   currentSlideIndex: 0,
   rotationTimer: null,
   refreshTimer: null,
@@ -215,7 +215,7 @@ function renderCurrentSlide() {
     return;
   }
 
-  if (["NOVA", "VF", "MHM"].includes(slideId)) {
+  if (["NOVA", "VF", "MHM", "Retention"].includes(slideId)) {
     slideRoot.innerHTML = renderTeamSlide(slideId, state.data.teams?.[slideId] || []);
     return;
   }
@@ -227,13 +227,41 @@ function renderCurrentSlide() {
 // RENDER FUNCTIONS ("Sales Scoreboard" design)
 // ---------------------------------------------------------
 
-// Funnel stage index for the ladder indicator (1-5, deepest = TBK)
+// Funnel stage index for the ladder indicator (1-5, deepest = TBK).
+// Retention shares the same 5-rung ladder for visual consistency across
+// slides: its two unique metrics slot into the "booking" and "conversion"
+// checkpoints of the pipeline, IDV/TBK stay the same as elsewhere.
 const FUNNEL_STAGE = {
   "PreSales": 1,
   "SC1 Booked": 2,
   "SC1 Successful": 3,
+  "Booked Sales Call": 1,
+  "Widerruf Zurückgewonnen": 3,
   "IDV": 4,
   "TBK": 5
+};
+
+const STANDARD_TEAM_METRICS = [
+  { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
+  { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
+  { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
+  { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
+];
+
+const RETENTION_TEAM_METRICS = [
+  { label: "Booked Sales Call", dayKey: "Booked Sales Call (days)", weekKey: "Booked Sales Call (weeks)", toneClass: "tone-pre", stageKey: "Booked Sales Call" },
+  { label: "Widerruf Zurückgewonnen", dayKey: "Widerruf Zurückgewonnen (days)", weekKey: "Widerruf Zurückgewonnen (weeks)", toneClass: "tone-successful", stageKey: "Widerruf Zurückgewonnen" },
+  { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
+  { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
+];
+
+// Per-slide config: which metric set to use, and whether to show the
+// MTD chips (Retention isn't tracked in the MTD sheet, so it's hidden there).
+const TEAM_SLIDE_CONFIG = {
+  NOVA: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
+  VF: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
+  MHM: { metrics: STANDARD_TEAM_METRICS, showMtd: true },
+  Retention: { metrics: RETENTION_TEAM_METRICS, showMtd: false }
 };
 
 function renderFunnelLadder(stage) {
@@ -267,7 +295,7 @@ function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
 function renderLast6WeeksSlide(rows) {
   const weeklyRows = rows
     .filter(row => String(row["Calendar Week"] || "").startsWith("CW"))
-    .sort((a, b) => Number(b["Weeks from Now"]) - Number(a["Weeks from Now"]));
+    .sort((a, b) => Number(a["Weeks from Now"]) - Number(b["Weeks from Now"]));
 
   const allTimeRow = rows.find(row => {
     return String(row["Calendar Week"] || "").toLowerCase() === "all time";
@@ -304,7 +332,7 @@ function renderLast6Row({ metric, label, toneClass, rows, total }) {
           valueKey: metric,
           labelKey: "Calendar Week",
           toneClass,
-          latestIndex: rows.length - 1
+          latestIndex: 0
         })}
       </div>
 
@@ -390,37 +418,35 @@ function renderOverviewRow(metric, rows, teamsToShow) {
 // 3. AGENCY DETAIL SLIDES
 
 function renderTeamSlide(teamName, rows) {
-  const metrics = [
-    { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
-    { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
-    { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
-    { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
-  ];
+  const config = TEAM_SLIDE_CONFIG[teamName] || { metrics: STANDARD_TEAM_METRICS, showMtd: false };
+  const metrics = config.metrics;
 
-  const sortedRows = [...rows].sort((a, b) => Number(b.Sort || 0) - Number(a.Sort || 0));
+  const sortedRows = [...rows].sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
   const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
   const weekRows = sortedRows
     .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
-    .sort((a, b) => getWeekNumber(a.CW) - getWeekNumber(b.CW));
+    .sort((a, b) => getWeekNumber(b.CW) - getWeekNumber(a.CW));
 
-  const mtdIdv = getTeamMtdValue(teamName, "IDV");
-  const mtdTbk = getTeamMtdValue(teamName, "TBK");
+  const mtdChips = config.showMtd
+    ? `
+      <div class="mtd-chips">
+        <div class="mtd-chip tone-idv">
+          <span class="chip-label">IDV MTD</span>
+          <span class="chip-value">${formatNumber(getTeamMtdValue(teamName, "IDV"))}</span>
+        </div>
+        <div class="mtd-chip tone-tbk">
+          <span class="chip-label">TBK MTD</span>
+          <span class="chip-value">${formatNumber(getTeamMtdValue(teamName, "TBK"))}</span>
+        </div>
+      </div>
+    `
+    : "";
 
   return `
     <main class="slide team-slide">
       <header class="slide-head">
         <h1 class="slide-title">${escapeHtml(teamName)}</h1>
-
-        <div class="mtd-chips">
-          <div class="mtd-chip tone-idv">
-            <span class="chip-label">IDV MTD</span>
-            <span class="chip-value">${formatNumber(mtdIdv)}</span>
-          </div>
-          <div class="mtd-chip tone-tbk">
-            <span class="chip-label">TBK MTD</span>
-            <span class="chip-value">${formatNumber(mtdTbk)}</span>
-          </div>
-        </div>
+        ${mtdChips}
       </header>
 
       <div class="team-col-heads">
@@ -462,7 +488,7 @@ function renderTeamRow(metric, dayRows, weekRows) {
           valueKey: metric.dayKey,
           labelKey: "Day",
           toneClass: metric.toneClass,
-          latestIndex: validDayRows.length - 1
+          latestIndex: 0
         })}
       </div>
 
@@ -472,7 +498,7 @@ function renderTeamRow(metric, dayRows, weekRows) {
           valueKey: metric.weekKey,
           labelKey: "CW",
           toneClass: metric.toneClass,
-          latestIndex: validWeekRows.length - 1
+          latestIndex: 0
         })}
       </div>
     </div>
@@ -631,12 +657,7 @@ function getWeekNumber(value) {
 
 function formatNumber(value) {
   const number = Number(value || 0);
-
-  return new Intl.NumberFormat("de-DE", {
-    maximumFractionDigits: 0
-  })
-    .format(number)
-    .replace(/\./g, " ");
+  return String(Math.round(number));
 }
 
 function toBoolean(value) {

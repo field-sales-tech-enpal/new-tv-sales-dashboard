@@ -1,5 +1,5 @@
 window.DASHBOARD_CONFIG = {
-  DATA_URL: "https://script.google.com/macros/s/AKfycby4kq0SEAgXQAWT5CPGfLPysQWDFmJNWwWWvTeFT5fnbmOR06HdikcZTmRn3oTm97xi/exec",
+  DATA_URL: "https://script.google.com/macros/s/AKfycbwe9BNtAA4-t_Xi0OYZxxuMNBB06ELIDdeYY5wqhgIOe5Jc9ryZ7cJvmFawRIe4fKtG/exec",
 
   DEFAULT_ROTATION_SECONDS: 60,
   DEFAULT_REFRESH_SECONDS: 300,

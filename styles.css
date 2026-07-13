@@ -542,7 +542,7 @@ body {
 }
 
 .overview-slide .team-cell .bar-fill {
-  width: clamp(46px, 4vw, 72px);
+  width: clamp(64px, 5.6vw, 100px);
 }
 
 .overview-slide .bar-value {

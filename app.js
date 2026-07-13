@@ -223,6 +223,47 @@ function renderCurrentSlide() {
   slideRoot.innerHTML = renderFallbackSlide(slideId);
 }
 
+// ---------------------------------------------------------
+// RENDER FUNCTIONS ("Sales Scoreboard" design)
+// ---------------------------------------------------------
+
+// Funnel stage index for the ladder indicator (1-5, deepest = TBK)
+const FUNNEL_STAGE = {
+  "PreSales": 1,
+  "SC1 Booked": 2,
+  "SC1 Successful": 3,
+  "IDV": 4,
+  "TBK": 5
+};
+
+function renderFunnelLadder(stage) {
+  let rungs = "";
+  for (let i = 1; i <= 5; i++) {
+    rungs += `<div class="rung ${i <= stage ? "lit" : ""}"></div>`;
+  }
+  return `<div class="funnel-ladder">${rungs}</div>`;
+}
+
+function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
+  const max = Math.max(...items.map(row => Number(row[valueKey] || 0)), 1);
+
+  return items.map((row, index) => {
+    const value = Number(row[valueKey] || 0);
+    const height = Math.max((value / max) * 100, value > 0 ? 6 : 0);
+    const isLatest = latestIndex !== undefined ? index === latestIndex : false;
+
+    return `
+      <div class="bar-col ${toneClass} ${isLatest ? "latest" : ""}">
+        <div class="bar-value">${formatNumber(value)}</div>
+        <div class="bar-fill" style="height: ${height}%;"></div>
+        <div class="bar-tick">${escapeHtml(row[labelKey] || "")}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// 1. LAST 6 WEEKS
+
 function renderLast6WeeksSlide(rows) {
   const weeklyRows = rows
     .filter(row => String(row["Calendar Week"] || "").startsWith("CW"))
@@ -233,95 +274,54 @@ function renderLast6WeeksSlide(rows) {
   }) || {};
 
   return `
-    <main class="slide">
-      <section class="last6-header">
-        <div class="last6-title">Last 6 Weeks</div>
-        <div class="last6-total-title">All time</div>
-      </section>
+    <main class="slide last6-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">Last 6 Weeks</h1>
+        <div class="slide-head-meta">All time</div>
+      </header>
 
-      <section class="last6-rows">
-        ${renderLast6MetricRow({
-          metric: "IDV",
-          cssClass: "idv",
-          rows: weeklyRows,
-          total: allTimeRow.IDV
-        })}
-
-        ${renderLast6MetricRow({
-          metric: "TBK",
-          cssClass: "tbk",
-          rows: weeklyRows,
-          total: allTimeRow.TBK
-        })}
+      <section class="metric-list">
+        ${renderLast6Row({ metric: "IDV", label: "IDV", toneClass: "tone-idv", rows: weeklyRows, total: allTimeRow.IDV })}
+        ${renderLast6Row({ metric: "TBK", label: "TBK", toneClass: "tone-tbk", rows: weeklyRows, total: allTimeRow.TBK })}
       </section>
     </main>
   `;
 }
 
-function renderLast6MetricRow({ metric, cssClass, rows, total }) {
-  const max = Math.max(...rows.map(row => Number(row[metric] || 0)), 1);
+function renderLast6Row({ metric, label, toneClass, rows, total }) {
+  const stage = FUNNEL_STAGE[metric] || 0;
 
   return `
-    <div class="last6-row ${cssClass}">
-      <div class="last6-metric">${escapeHtml(metric)}</div>
-
-      <div class="last6-chart-card">
-        <div class="last6-chart">
-          ${rows.map((row, index) => {
-            const value = Number(row[metric] || 0);
-            const height = Math.max((value / max) * 100, value > 0 ? 8 : 0);
-            const isLatest = index === rows.length - 1;
-
-            return `
-              <div class="last6-bar-wrap ${isLatest ? "latest" : ""}">
-                <div class="last6-value ${cssClass}-color">${formatNumber(value)}</div>
-                <div class="bar last6-bar" style="height: ${height}%;"></div>
-                <div class="last6-label">${escapeHtml(row["Calendar Week"])}</div>
-              </div>
-            `;
-          }).join("")}
-        </div>
+    <div class="stat-row">
+      <div class="row-label ${toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(label)}</span>
       </div>
 
-      <div class="last6-total-card">
-        <div class="last6-total ${cssClass}-color">${formatNumber(total)}</div>
+      <div class="bars">
+        ${renderBars({
+          items: rows,
+          valueKey: metric,
+          labelKey: "Calendar Week",
+          toneClass,
+          latestIndex: rows.length - 1
+        })}
       </div>
+
+      <div class="row-total ${toneClass}">${formatNumber(total)}</div>
     </div>
   `;
 }
 
+// 2. DAILY LIVETICKER + OVERALL MTD
+
 function renderOverviewSlide({ title, rows }) {
   const metrics = [
-    {
-      label: "PreSales Booking",
-      key: "PreSales",
-      cssClass: "pre",
-      lineClass: "pre-line"
-    },
-    {
-      label: "Booked SC1",
-      key: "SC1 Booked",
-      cssClass: "pre",
-      lineClass: "pre-line-alt"
-    },
-    {
-      label: "Successful SC1",
-      key: "SC1 Successful",
-      cssClass: "successful",
-      lineClass: "successful-line"
-    },
-    {
-      label: "IDV",
-      key: "IDV",
-      cssClass: "idv",
-      lineClass: "idv-line"
-    },
-    {
-      label: "TBK",
-      key: "TBK",
-      cssClass: "tbk",
-      lineClass: "tbk-line"
-    }
+    { label: "PreSales Booking", key: "PreSales", toneClass: "tone-pre" },
+    { label: "Booked SC1", key: "SC1 Booked", toneClass: "tone-pre-alt" },
+    { label: "Successful SC1", key: "SC1 Successful", toneClass: "tone-successful" },
+    { label: "IDV", key: "IDV", toneClass: "tone-idv" },
+    { label: "TBK", key: "TBK", toneClass: "tone-tbk" }
   ];
 
   const teamsToShow = window.DASHBOARD_CONFIG.TEAMS_TO_SHOW || ["NOVA", "VF", "MHM"];
@@ -331,21 +331,27 @@ function renderOverviewSlide({ title, rows }) {
     .sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
 
   return `
-    <main class="slide overview-agency-slide">
-      <section class="overview-title">${escapeHtml(title)}</section>
+    <main class="slide overview-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">${escapeHtml(title)}</h1>
+      </header>
 
-      <section class="overview-agency-table">
-        <div class="head-spacer"></div>
-        <div class="total-head">TOTAL</div>
-        ${teamsToShow.map(team => `<div class="team-head">${escapeHtml(team)}</div>`).join("")}
+      <div class="table-head">
+        <div></div>
+        <div class="table-head-total">Total</div>
+        <div class="table-head-teams">
+          ${teamsToShow.map(team => `<div>${escapeHtml(team)}</div>`).join("")}
+        </div>
+      </div>
 
-        ${metrics.map(metric => renderOverviewMetricRow(metric, filteredRows, teamsToShow)).join("")}
+      <section class="metric-list">
+        ${metrics.map(metric => renderOverviewRow(metric, filteredRows, teamsToShow)).join("")}
       </section>
     </main>
   `;
 }
 
-function renderOverviewMetricRow(metric, rows, teamsToShow) {
+function renderOverviewRow(metric, rows, teamsToShow) {
   const values = teamsToShow.map(team => {
     const row = rows.find(item => String(item["Daily Stats"] || "").toUpperCase() === team);
     return Number(row?.[metric.key] || 0);
@@ -353,23 +359,26 @@ function renderOverviewMetricRow(metric, rows, teamsToShow) {
 
   const total = values.reduce((sum, value) => sum + value, 0);
   const max = Math.max(...values, 1);
+  const stage = FUNNEL_STAGE[metric.key] || 0;
 
   return `
-    <div class="overview-line ${metric.lineClass}">
-      <div class="overview-metric-label">${escapeHtml(metric.label)}</div>
-      <div class="overview-total-number">${formatNumber(total)}</div>
+    <div class="stat-row">
+      <div class="row-label ${metric.toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(metric.label)}</span>
+      </div>
 
-      <div class="overview-team-group">
+      <div class="row-total ${metric.toneClass}">${formatNumber(total)}</div>
+
+      <div class="team-bars">
         ${values.map(value => {
           const ratio = max > 0 ? value / max : 0;
-          const height = value > 0 ? Math.max(ratio * 100, 10) : 0;
+          const height = value > 0 ? Math.max(ratio * 100, 6) : 0;
 
           return `
-            <div class="overview-team-box">
-              <div class="overview-mini-chart" style="--p: ${ratio.toFixed(2)};">
-                <div class="overview-mini-value">${formatNumber(value)}</div>
-                <div class="overview-mini-bar" style="height: ${height}%;"></div>
-              </div>
+            <div class="team-cell ${metric.toneClass}">
+              <div class="bar-value">${formatNumber(value)}</div>
+              <div class="bar-fill" style="height: ${height}%;"></div>
             </div>
           `;
         }).join("")}
@@ -378,38 +387,18 @@ function renderOverviewMetricRow(metric, rows, teamsToShow) {
   `;
 }
 
+// 3. AGENCY DETAIL SLIDES
+
 function renderTeamSlide(teamName, rows) {
   const metrics = [
-    {
-      label: "PreSales Booking",
-      dayKey: "PreSales (days)",
-      weekKey: "PreSales (weeks)",
-      cssClass: "pre"
-    },
-    {
-      label: "Successful SC1",
-      dayKey: "SC1 Successful (days)",
-      weekKey: "SC1 Successful (weeks)",
-      cssClass: "successful"
-    },
-    {
-      label: "IDV",
-      dayKey: "IDV (days)",
-      weekKey: "IDV (weeks)",
-      cssClass: "idv"
-    },
-    {
-      label: "TBK",
-      dayKey: "TBK (days)",
-      weekKey: "TBK (weeks)",
-      cssClass: "tbk"
-    }
+    { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
+    { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
+    { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
+    { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
   ];
 
   const sortedRows = [...rows].sort((a, b) => Number(b.Sort || 0) - Number(a.Sort || 0));
-
   const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
-
   const weekRows = sortedRows
     .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
     .sort((a, b) => getWeekNumber(a.CW) - getWeekNumber(b.CW));
@@ -418,96 +407,79 @@ function renderTeamSlide(teamName, rows) {
   const mtdTbk = getTeamMtdValue(teamName, "TBK");
 
   return `
-    <main class="slide">
-      <section class="team-top">
-        <div class="team-title">${escapeHtml(teamName)}</div>
+    <main class="slide team-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">${escapeHtml(teamName)}</h1>
 
-        <div class="summary-card">
-          <div class="summary-title">MTD Summary</div>
-
-          <div class="summary-values">
-            <div class="summary-item">
-              <div class="summary-label idv-color">IDV</div>
-              <div class="summary-number idv-color">${formatNumber(mtdIdv)}</div>
-            </div>
-
-            <div class="summary-item">
-              <div class="summary-label tbk-color">TBK</div>
-              <div class="summary-number tbk-color">${formatNumber(mtdTbk)}</div>
-            </div>
+        <div class="mtd-chips">
+          <div class="mtd-chip tone-idv">
+            <span class="chip-label">IDV MTD</span>
+            <span class="chip-value">${formatNumber(mtdIdv)}</span>
+          </div>
+          <div class="mtd-chip tone-tbk">
+            <span class="chip-label">TBK MTD</span>
+            <span class="chip-value">${formatNumber(mtdTbk)}</span>
           </div>
         </div>
-      </section>
+      </header>
 
-      <section class="team-content">
-        <div>
-          <div class="label-spacer"></div>
+      <div class="team-col-heads">
+        <div></div>
+        <div class="col-head">Last 10 days</div>
+        <div class="col-head">Last 5 weeks</div>
+      </div>
 
-          <div class="metric-labels">
-            ${metrics.map(metric => `<div class="metric-label">${escapeHtml(metric.label)}</div>`).join("")}
-          </div>
-        </div>
-
-        <div class="chart-column">
-          <div class="section-title">Last 10 days</div>
-
-          <div class="chart-stack">
-            ${metrics.map(metric => renderTeamChartCard({
-              cssClass: metric.cssClass,
-              rows: dayRows,
-              valueKey: metric.dayKey,
-              labelKey: "Day",
-              weekly: false
-            })).join("")}
-          </div>
-        </div>
-
-        <div class="chart-column">
-          <div class="section-title">Last 5 weeks</div>
-
-          <div class="chart-stack">
-            ${metrics.map(metric => renderTeamChartCard({
-              cssClass: metric.cssClass,
-              rows: weekRows,
-              valueKey: metric.weekKey,
-              labelKey: "CW",
-              weekly: true
-            })).join("")}
-          </div>
-        </div>
+      <section class="metric-list">
+        ${metrics.map(metric => renderTeamRow(metric, dayRows, weekRows)).join("")}
       </section>
     </main>
   `;
 }
 
-function renderTeamChartCard({ cssClass, rows, valueKey, labelKey, weekly }) {
-  const validRows = rows.filter(row => {
-    const value = row[valueKey];
+function renderTeamRow(metric, dayRows, weekRows) {
+  const stage = FUNNEL_STAGE[metric.stageKey] || 0;
+
+  const validDayRows = dayRows.filter(row => {
+    const value = row[metric.dayKey];
     return value !== "" && value !== null && value !== undefined;
   });
 
-  const max = Math.max(...validRows.map(row => Number(row[valueKey] || 0)), 1);
+  const validWeekRows = weekRows.filter(row => {
+    const value = row[metric.weekKey];
+    return value !== "" && value !== null && value !== undefined;
+  });
 
   return `
-    <div class="chart-card ${weekly ? "weekly-card" : ""} ${cssClass}">
-      <div class="mini-chart ${weekly ? "weekly-chart" : ""}">
-        ${validRows.map((row, index) => {
-          const value = Number(row[valueKey] || 0);
-          const height = Math.max((value / max) * 100, value > 0 ? 7 : 0);
-          const isLatest = index === validRows.length - 1;
+    <div class="stat-row">
+      <div class="row-label ${metric.toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(metric.label)}</span>
+      </div>
 
-          return `
-            <div class="bar-wrap ${isLatest ? "latest" : ""}">
-              <div class="bar-value">${formatNumber(value)}</div>
-              <div class="bar team-bar" style="height: ${height}%;"></div>
-              <div class="bar-label">${escapeHtml(row[labelKey] || "")}</div>
-            </div>
-          `;
-        }).join("")}
+      <div class="bars">
+        ${renderBars({
+          items: validDayRows,
+          valueKey: metric.dayKey,
+          labelKey: "Day",
+          toneClass: metric.toneClass,
+          latestIndex: validDayRows.length - 1
+        })}
+      </div>
+
+      <div class="bars weekly">
+        ${renderBars({
+          items: validWeekRows,
+          valueKey: metric.weekKey,
+          labelKey: "CW",
+          toneClass: metric.toneClass,
+          latestIndex: validWeekRows.length - 1
+        })}
       </div>
     </div>
   `;
 }
+
+// 4. CELEBRATION SLIDE (unchanged)
 
 function renderTriggerSlide(trigger) {
   const metric = String(trigger.Metric || trigger.Type || "").toUpperCase();
@@ -537,12 +509,16 @@ function renderTriggerSlide(trigger) {
 function renderFallbackSlide(slideId) {
   return `
     <main class="slide">
-      <section class="overview-title">
-        ${escapeHtml(slideId)}
-      </section>
+      <header class="slide-head">
+        <h1 class="slide-title">${escapeHtml(slideId)}</h1>
+      </header>
     </main>
   `;
 }
+
+// ---------------------------------------------------------
+// audio / triggers
+// ---------------------------------------------------------
 
 function setupAudioPools() {
   const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
@@ -628,6 +604,10 @@ function setupAudioUnlock() {
   window.addEventListener("keydown", unlockAudio, { once: true });
   window.addEventListener("pointerdown", unlockAudio, { once: true });
 }
+
+// ---------------------------------------------------------
+// helpers
+// ---------------------------------------------------------
 
 function getTeamMtdValue(teamName, metric) {
   const row = (state.data?.mtd || []).find(item => {

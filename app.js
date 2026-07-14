@@ -294,6 +294,17 @@ const FUNNEL_STAGE = {
   "TBK": 5
 };
 
+// Display labels shown on screen, separate from the internal keys used for
+// data lookups (sheet tab names, MTD matching, etc.) - only add an entry
+// here if the on-screen name should differ from the key itself.
+const TEAM_DISPLAY_NAMES = {
+  VF: "Vertriebsfluss"
+};
+
+function getTeamDisplayName(teamKey) {
+  return TEAM_DISPLAY_NAMES[teamKey] || teamKey;
+}
+
 const STANDARD_TEAM_METRICS = [
   { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
   { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
@@ -424,7 +435,7 @@ function renderOverviewSlide({ title, rows }) {
         <div></div>
         <div class="table-head-total">Total</div>
         <div class="table-head-teams">
-          ${teamsToShow.map(team => `<div>${escapeHtml(team)}</div>`).join("")}
+          ${teamsToShow.map(team => `<div>${escapeHtml(getTeamDisplayName(team))}</div>`).join("")}
         </div>
       </div>
 
@@ -512,7 +523,7 @@ function renderTeamSlide(teamName, rows) {
   return `
     <main class="slide team-slide">
       <header class="slide-head">
-        <h1 class="slide-title">${escapeHtml(teamName)}</h1>
+        <h1 class="slide-title">${escapeHtml(getTeamDisplayName(teamName))}</h1>
         ${mtdChips}
       </header>
 
@@ -589,8 +600,13 @@ function renderTriggerSlide(trigger) {
   const title = `${emoji} NEW ${typePrefix}${metric} ${emoji}`;
 
   const isPv = type === "PV";
-  const effect = (isPv && metric === "TBK") ? "sun" : (celebration.effect || "confetti");
-  const themeClass = isPv ? "pv-theme" : "";
+  const isRetention = type === "RETENTION";
+
+  let effect = celebration.effect || "confetti";
+  if (isPv && metric === "TBK") effect = "sun";
+  if (isRetention && metric === "TBK") effect = "buoy";
+
+  const themeClass = isPv ? "pv-theme" : (isRetention ? "retention-theme" : "");
   const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
 
   return `
@@ -606,15 +622,18 @@ function renderTriggerSlide(trigger) {
 
 function renderParticleField(effect) {
   if (effect === "money") {
-    return renderMoneyParticles(60);
+    return renderMoneyParticles(36);
   }
   if (effect === "sun") {
-    return renderSunParticles(40);
+    return renderEmojiParticles("☀️", 26);
   }
-  return renderConfettiParticles(46);
+  if (effect === "buoy") {
+    return renderEmojiParticles("🛟", 26);
+  }
+  return renderConfettiParticles(30);
 }
 
-function renderSunParticles(count) {
+function renderEmojiParticles(emoji, count) {
   let out = "";
 
   for (let i = 0; i < count; i++) {
@@ -626,9 +645,9 @@ function renderSunParticles(count) {
 
     out += `
       <span
-        class="sun-piece"
+        class="emoji-piece"
         style="left: ${left}%; font-size: ${size}px; animation-delay: ${delay}s; animation-duration: ${duration}s; --start-rotate: ${rotate}deg;"
-      >☀️</span>
+      >${emoji}</span>
     `;
   }
 

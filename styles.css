@@ -1,861 +1,959 @@
-const state = {
-  data: null,
-  slides: ["last6Weeks", "daily", "mtd", "NOVA", "VF", "MHM", "Retention"],
-  currentSlideIndex: 0,
-  rotationTimer: null,
-  refreshTimer: null,
-  triggerRefreshTimer: null,
-  triggerTimer: null,
-  lastShownTriggerId: localStorage.getItem("lastShownTriggerId") || "",
-  lastShownSignature: localStorage.getItem("lastShownSignature") || "",
-  lastShownAt: Number(localStorage.getItem("lastShownAt") || 0),
-  isShowingTrigger: false,
-  audioPools: {}
-};
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap");
 
-const slideRoot = document.getElementById("slideRoot");
-const loading = document.getElementById("loading");
-const errorBox = document.getElementById("errorBox");
-const errorMessage = document.getElementById("errorMessage");
+/* =========================================================
+   BASE
+========================================================= */
 
-initDashboard();
-
-async function initDashboard() {
-  try {
-    setupAudioPools();
-
-    await loadData();
-
-    loading.classList.add("hidden");
-    slideRoot.classList.remove("hidden");
-
-    renderCurrentSlide();
-    startRotation();
-    startFullDataRefreshLoop();
-    startTriggerRefreshLoop();
-    setupAudioUnlock();
-  } catch (error) {
-    showError(error);
-  }
+* {
+  box-sizing: border-box;
 }
 
-async function loadData() {
-  const url = window.DASHBOARD_CONFIG.DATA_URL;
+:root {
+  --enpal-navy: #05284a;
+  --enpal-navy-2: #0b355d;
 
-  if (!url || url.includes("PASTE_YOUR")) {
-    throw new Error("Missing DATA_URL in config.js");
-  }
+  --enpal-orange: #ffd65a;
+  --enpal-orange-dark: #ffc83d;
+  --enpal-blue: #3f7df1;
 
-  const response = await fetch(url, {
-    method: "GET",
-    cache: "no-store"
-  });
+  --metric-orange: #ffd65a;
+  --metric-yellow: #ffbd00;
+  --metric-light-blue: #5aa7ff;
+  --metric-dark-blue: #05284a;
 
-  if (!response.ok) {
-    throw new Error(`Data fetch failed: ${response.status} ${response.statusText}`);
-  }
+  --enpal-grey: #eef3f7;
+  --enpal-light-grey: #f7fafc;
+  --enpal-cream: #fff8e8;
 
-  state.data = await response.json();
+  --enpal-border: rgba(5, 40, 74, 0.12);
+  --enpal-border-strong: rgba(5, 40, 74, 0.16);
+  --enpal-shadow: rgba(5, 40, 74, 0.13);
+
+  --white: #ffffff;
+  --text: var(--enpal-navy);
+  --bg: #e9eef4;
+
+  --font-display: "Poppins", Arial, sans-serif;
+  --font-mono: "Poppins", Arial, sans-serif;
+
+  --hairline: rgba(5, 40, 74, 0.1);
 }
 
-async function loadTriggerData() {
-  const baseUrl = window.DASHBOARD_CONFIG.DATA_URL;
-
-  if (!baseUrl || baseUrl.includes("PASTE_YOUR")) {
-    throw new Error("Missing DATA_URL in config.js");
-  }
-
-  const separator = baseUrl.includes("?") ? "&" : "?";
-  const url = `${baseUrl}${separator}mode=trigger`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error(`Trigger fetch failed: ${response.status} ${response.statusText}`);
-  }
-
-  const triggerData = await response.json();
-
-  if (!state.data) {
-    state.data = {};
-  }
-
-  state.data.config = {
-    ...(state.data.config || {}),
-    ...(triggerData.config || {})
-  };
-
-  state.data.triggers = triggerData.triggers || [];
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255, 214, 90, 0.18), transparent 32%),
+    radial-gradient(circle at 85% 0%, rgba(63, 125, 241, 0.14), transparent 30%),
+    #e9eef4;
+  font-family: var(--font-display);
+  color: var(--enpal-navy);
 }
 
-function startRotation() {
-  clearInterval(state.rotationTimer);
+.dashboard,
+.slide-root {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
 
-  const seconds = Number(
-    state.data?.config?.rotationSeconds ||
-    window.DASHBOARD_CONFIG.DEFAULT_ROTATION_SECONDS ||
-    60
+.dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide-root {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =========================================================
+   SLIDE FRAME
+========================================================= */
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  padding:
+    clamp(28px, 3.6vh, 54px)
+    clamp(44px, 4.4vw, 84px);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 240, 200, 1) 0%,
+      rgba(255, 250, 240, 1) 28%,
+      rgba(255, 255, 255, 1) 52%,
+      rgba(232, 240, 250, 1) 100%
+    );
+  box-shadow: inset 0 0 clamp(80px, 9vw, 160px) rgba(5, 40, 74, 0.1);
+
+  display: flex;
+  flex-direction: column;
+}
+
+.slide::before {
+  content: "";
+  position: absolute;
+  width: clamp(380px, 34vw, 620px);
+  height: clamp(380px, 34vw, 620px);
+  top: clamp(-280px, -15vw, -140px);
+  right: clamp(-240px, -10vw, -100px);
+  background: radial-gradient(
+    circle,
+    rgba(255, 214, 90, 0.5),
+    rgba(255, 214, 90, 0) 68%
   );
-
-  state.rotationTimer = setInterval(() => {
-    if (state.isShowingTrigger) return;
-
-    state.currentSlideIndex = (state.currentSlideIndex + 1) % state.slides.length;
-    renderCurrentSlide();
-  }, seconds * 1000);
+  z-index: -1;
 }
 
-function startFullDataRefreshLoop() {
-  clearInterval(state.refreshTimer);
-
-  const seconds = Number(
-    state.data?.config?.refreshSeconds ||
-    window.DASHBOARD_CONFIG.DEFAULT_REFRESH_SECONDS ||
-    300
+.slide::after {
+  content: "";
+  position: absolute;
+  width: clamp(480px, 46vw, 860px);
+  height: clamp(480px, 46vw, 860px);
+  left: clamp(-420px, -18vw, -200px);
+  bottom: clamp(-460px, -22vw, -240px);
+  background: radial-gradient(
+    circle,
+    rgba(63, 125, 241, 0.24),
+    rgba(63, 125, 241, 0) 70%
   );
-
-  state.refreshTimer = setInterval(async () => {
-    try {
-      await loadData();
-
-      if (!state.isShowingTrigger) {
-        renderCurrentSlide();
-      }
-
-      hideError();
-    } catch (error) {
-      showError(error);
-    }
-  }, seconds * 1000);
+  z-index: -1;
 }
 
-function startTriggerRefreshLoop() {
-  clearInterval(state.triggerRefreshTimer);
+/* =========================================================
+   LOADING / ERROR
+========================================================= */
 
-  const seconds = Number(
-    state.data?.config?.triggerRefreshSeconds ||
-    window.DASHBOARD_CONFIG.DEFAULT_TRIGGER_REFRESH_SECONDS ||
-    10
-  );
-
-  state.triggerRefreshTimer = setInterval(async () => {
-    try {
-      await loadTriggerData();
-      checkForTrigger();
-      hideError();
-    } catch (error) {
-      showError(error);
-    }
-  }, seconds * 1000);
+.loading-screen {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
 }
 
-function checkForTrigger() {
-  if (!window.DASHBOARD_CONFIG.ENABLE_TRIGGER_INTERRUPTIONS) return;
-
-  const triggers = state.data?.triggers || [];
-  if (!triggers.length) return;
-
-  const activeTrigger = triggers.find(trigger => toBoolean(trigger.Active));
-  if (!activeTrigger) return;
-
-  const triggerId = String(activeTrigger["Trigger ID"] || "").trim();
-  if (!triggerId) return;
-
-  if (triggerId === state.lastShownTriggerId) return;
-
-  // Safety net: if the Trigger ID happens to be regenerated for the same
-  // underlying event (e.g. a timestamp-based ID that changes on every sheet
-  // recalculation), a composite signature + cooldown window catches it even
-  // though the ID looks "new".
-  const signature = buildTriggerSignature(activeTrigger);
-  const now = Date.now();
-  const cooldownMs = Number(
-    state.data?.config?.triggerDedupeCooldownSeconds ||
-    window.DASHBOARD_CONFIG.DEFAULT_TRIGGER_DEDUPE_COOLDOWN_SECONDS ||
-    120
-  ) * 1000;
-
-  const isDuplicateEvent =
-    signature &&
-    signature === state.lastShownSignature &&
-    (now - state.lastShownAt) < cooldownMs;
-
-  state.lastShownTriggerId = triggerId;
-  localStorage.setItem("lastShownTriggerId", triggerId);
-
-  if (isDuplicateEvent) return;
-
-  state.lastShownSignature = signature;
-  state.lastShownAt = now;
-  localStorage.setItem("lastShownSignature", signature);
-  localStorage.setItem("lastShownAt", String(now));
-
-  showTriggerSlide(activeTrigger);
+.loading-card {
+  width: 420px;
+  padding: 34px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 26px 70px rgba(5, 40, 74, 0.18);
+  text-align: center;
 }
 
-function buildTriggerSignature(trigger) {
-  const type = String(trigger.Type || "").trim().toUpperCase();
-  const metric = String(trigger.Metric || "").trim().toUpperCase();
-  const team = String(trigger.Team || "").trim().toUpperCase();
-  const value = String(trigger.Value || "").trim().toUpperCase();
-  return `${type}|${metric}|${team}|${value}`;
+.loading-title {
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -0.04em;
 }
 
-function showTriggerSlide(trigger) {
-  state.isShowingTrigger = true;
-  slideRoot.innerHTML = renderTriggerSlide(trigger);
-  fitCelebrationTitle();
-
-  const metric = String(trigger.Metric || "").toUpperCase();
-  playCelebrationSound(metric);
-
-  clearTimeout(state.triggerTimer);
-
-  const seconds = Number(
-    state.data?.config?.triggerDisplaySeconds ||
-    window.DASHBOARD_CONFIG.DEFAULT_TRIGGER_DISPLAY_SECONDS ||
-    45
-  );
-
-  state.triggerTimer = setTimeout(() => {
-    state.isShowingTrigger = false;
-    renderCurrentSlide();
-  }, seconds * 1000);
+.loading-subtitle {
+  font-size: 15px;
+  color: rgba(5, 40, 74, 0.7);
 }
 
-// Shrinks the celebration title's font-size until it fits on a single line,
-// so long combos like "NEW RETENTION TBK" never wrap.
-function fitCelebrationTitle() {
-  requestAnimationFrame(() => {
-    const h1 = slideRoot.querySelector(".gif-celebration h1");
-    if (!h1) return;
-
-    let size = parseFloat(getComputedStyle(h1).fontSize);
-    let guard = 60;
-
-    while (h1.scrollWidth > h1.clientWidth && size > 22 && guard > 0) {
-      size -= 2;
-      h1.style.fontSize = size + "px";
-      guard -= 1;
-    }
-  });
+.error-box {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  max-width: 560px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #fff2f2;
+  border: 1px solid #ffb8b8;
+  color: #9f1239;
+  box-shadow: 0 12px 30px rgba(28, 39, 76, 0.12);
+  z-index: 1000000;
 }
 
-function renderCurrentSlide() {
-  const slideId = state.slides[state.currentSlideIndex];
+.error-title {
+  font-weight: 900;
+  margin-bottom: 6px;
+}
 
-  if (slideId === "last6Weeks") {
-    slideRoot.innerHTML = renderLast6WeeksSlide(state.data.last6Weeks || []);
-    return;
+.error-message {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   SHARED MASTHEAD (slide title)
+========================================================= */
+
+.slide-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(16px, 2vw, 32px);
+  margin-bottom: clamp(22px, 3vh, 40px);
+}
+
+.slide-title {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  color: var(--enpal-navy);
+  font-size: clamp(36px, 5vh, 62px);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.slide-title::after {
+  content: ".";
+  color: var(--enpal-orange-dark);
+}
+
+.slide-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -9px;
+  width: 58px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--enpal-orange-dark), rgba(255, 200, 61, 0));
+}
+
+.slide-head-meta {
+  font-family: var(--font-mono);
+  font-size: clamp(13px, 1.5vh, 18px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.45);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   FUNNEL LADDER (signature element)
+   5 stages: PreSales(1) -> Booked SC1(2) -> Successful SC1(3)
+             -> IDV(4) -> TBK(5)
+   Lit rungs = how deep this metric sits in the pipeline.
+========================================================= */
+
+.funnel-ladder {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  width: 7px;
+  height: clamp(30px, 3.6vh, 42px);
+  flex: 0 0 auto;
+}
+
+.funnel-ladder .rung {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(5, 40, 74, 0.1);
+}
+
+.funnel-ladder .rung.lit {
+  background: linear-gradient(180deg, var(--enpal-orange-dark), var(--enpal-navy));
+}
+
+/* =========================================================
+   SHARED STAT-ROW LIST
+   Used on Last 6 Weeks, Daily Liveticker, Overall MTD
+========================================================= */
+
+.metric-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  align-items: stretch;
+  column-gap: clamp(20px, 2.2vw, 36px);
+}
+
+.stat-row:not(:last-child) {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.row-label {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.2vw, 18px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--enpal-navy);
+  min-width: 0;
+  height: 100%;
+}
+
+.row-label span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-total {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* bars shared by all charts */
+
+.bars {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(5, 40, 74, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(5, 40, 74, 0.08);
+}
+
+.bar-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transform-origin: bottom;
+  animation: grow 700ms ease forwards;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+    opacity: 0.4;
   }
 
-  if (slideId === "daily") {
-    slideRoot.innerHTML = renderOverviewSlide({
-      title: "Daily Liveticker",
-      rows: state.data.daily || []
-    });
-    return;
-  }
-
-  if (slideId === "mtd") {
-    slideRoot.innerHTML = renderOverviewSlide({
-      title: "Overall standing MTD",
-      rows: state.data.mtd || []
-    });
-    return;
-  }
-
-  if (["NOVA", "VF", "MHM", "Retention"].includes(slideId)) {
-    slideRoot.innerHTML = renderTeamSlide(slideId, state.data.teams?.[slideId] || []);
-    return;
-  }
-
-  slideRoot.innerHTML = renderFallbackSlide(slideId);
-}
-
-// ---------------------------------------------------------
-// RENDER FUNCTIONS ("Sales Scoreboard" design)
-// ---------------------------------------------------------
-
-// Funnel stage index for the ladder indicator (1-5, deepest = TBK).
-// Retention shares the same 5-rung ladder for visual consistency across
-// slides: its two unique metrics slot into the "booking" and "conversion"
-// checkpoints of the pipeline, IDV/TBK stay the same as elsewhere.
-const FUNNEL_STAGE = {
-  "PreSales": 1,
-  "SC1 Booked": 2,
-  "SC1 Successful": 3,
-  "Booked Sales Call": 1,
-  "Widerruf Zurückgewonnen": 3,
-  "IDV": 4,
-  "TBK": 5
-};
-
-const STANDARD_TEAM_METRICS = [
-  { label: "PreSales Booking", dayKey: "PreSales (days)", weekKey: "PreSales (weeks)", toneClass: "tone-pre", stageKey: "PreSales" },
-  { label: "Successful SC1", dayKey: "SC1 Successful (days)", weekKey: "SC1 Successful (weeks)", toneClass: "tone-successful", stageKey: "SC1 Successful" },
-  { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
-  { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
-];
-
-const RETENTION_TEAM_METRICS = [
-  { label: "Booked Sales Call", dayKey: "Booked Sales Call (days)", weekKey: "Booked Sales Call (weeks)", toneClass: "tone-pre", stageKey: "Booked Sales Call" },
-  { label: "Widerruf Zurückgewonnen", dayKey: "Widerruf Zurückgewonnen (days)", weekKey: "Widerruf Zurückgewonnen (weeks)", toneClass: "tone-successful", stageKey: "Widerruf Zurückgewonnen" },
-  { label: "IDV", dayKey: "IDV (days)", weekKey: "IDV (weeks)", toneClass: "tone-idv", stageKey: "IDV" },
-  { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
-];
-
-// Per-slide config: which metric set to use, and whether to show the
-// MTD chips (Retention isn't tracked in the MTD sheet, so it's hidden there).
-const TEAM_SLIDE_CONFIG = {
-  NOVA: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  VF: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  MHM: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  Retention: { metrics: RETENTION_TEAM_METRICS, showMtd: true, mtdSource: "inline" }
-};
-
-function renderFunnelLadder(stage) {
-  let rungs = "";
-  for (let i = 1; i <= 5; i++) {
-    rungs += `<div class="rung ${i <= stage ? "lit" : ""}"></div>`;
-  }
-  return `<div class="funnel-ladder">${rungs}</div>`;
-}
-
-function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
-  const max = Math.max(...items.map(row => Number(row[valueKey] || 0)), 1);
-
-  return items.map((row, index) => {
-    const value = Number(row[valueKey] || 0);
-    const height = Math.max((value / max) * 100, value > 0 ? 6 : 0);
-    const isLatest = latestIndex !== undefined ? index === latestIndex : false;
-
-    return `
-      <div class="bar-col ${toneClass} ${isLatest ? "latest" : ""}">
-        <div class="bar-value">${formatNumber(value)}</div>
-        <div class="bar-fill" style="height: ${height}%;"></div>
-        <div class="bar-tick">${escapeHtml(row[labelKey] || "")}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-// 1. LAST 6 WEEKS
-
-function renderLast6WeeksSlide(rows) {
-  const weeklyRows = rows
-    .filter(row => {
-      const label = String(row["Calendar Week"] || "").trim().toLowerCase();
-      return label !== "" && label !== "all time";
-    })
-    .sort((a, b) => Number(a["Weeks from Now"]) - Number(b["Weeks from Now"]));
-
-  const allTimeRow = rows.find(row => {
-    return String(row["Calendar Week"] || "").toLowerCase() === "all time";
-  }) || {};
-
-  return `
-    <main class="slide last6-slide">
-      <header class="slide-head">
-        <h1 class="slide-title">Last 6 Weeks</h1>
-        <div class="slide-head-meta">All time</div>
-      </header>
-
-      <section class="metric-list">
-        ${renderLast6Row({ metric: "IDV", label: "IDV", toneClass: "tone-idv", rows: weeklyRows, total: allTimeRow.IDV })}
-        ${renderLast6Row({ metric: "TBK", label: "TBK", toneClass: "tone-tbk", rows: weeklyRows, total: allTimeRow.TBK })}
-      </section>
-    </main>
-  `;
-}
-
-function renderLast6Row({ metric, label, toneClass, rows, total }) {
-  const stage = FUNNEL_STAGE[metric] || 0;
-
-  return `
-    <div class="stat-row">
-      <div class="row-label ${toneClass}">
-        ${renderFunnelLadder(stage)}
-        <span>${escapeHtml(label)}</span>
-      </div>
-
-      <div class="bars">
-        ${renderBars({
-          items: rows,
-          valueKey: metric,
-          labelKey: "Calendar Week",
-          toneClass,
-          latestIndex: 0
-        })}
-      </div>
-
-      <div class="row-total ${toneClass}">${formatNumber(total)}</div>
-    </div>
-  `;
-}
-
-// 2. DAILY LIVETICKER + OVERALL MTD
-
-function renderOverviewSlide({ title, rows }) {
-  const metrics = [
-    { label: "PreSales Booking", key: "PreSales", toneClass: "tone-pre" },
-    { label: "Booked SC1", key: "SC1 Booked", toneClass: "tone-pre-alt" },
-    { label: "Successful SC1", key: "SC1 Successful", toneClass: "tone-successful" },
-    { label: "IDV", key: "IDV", toneClass: "tone-idv" },
-    { label: "TBK", key: "TBK", toneClass: "tone-tbk" }
-  ];
-
-  const teamsToShow = window.DASHBOARD_CONFIG.TEAMS_TO_SHOW || ["NOVA", "VF", "MHM"];
-
-  const filteredRows = rows
-    .filter(row => teamsToShow.includes(String(row["Daily Stats"] || "").toUpperCase()))
-    .sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
-
-  return `
-    <main class="slide overview-slide">
-      <header class="slide-head">
-        <h1 class="slide-title">${escapeHtml(title)}</h1>
-      </header>
-
-      <div class="table-head">
-        <div></div>
-        <div class="table-head-total">Total</div>
-        <div class="table-head-teams">
-          ${teamsToShow.map(team => `<div>${escapeHtml(team)}</div>`).join("")}
-        </div>
-      </div>
-
-      <section class="metric-list">
-        ${metrics.map(metric => renderOverviewRow(metric, filteredRows, teamsToShow)).join("")}
-      </section>
-    </main>
-  `;
-}
-
-function renderOverviewRow(metric, rows, teamsToShow) {
-  const values = teamsToShow.map(team => {
-    const row = rows.find(item => String(item["Daily Stats"] || "").toUpperCase() === team);
-    return Number(row?.[metric.key] || 0);
-  });
-
-  const total = values.reduce((sum, value) => sum + value, 0);
-  const max = Math.max(...values, 1);
-  const stage = FUNNEL_STAGE[metric.key] || 0;
-
-  return `
-    <div class="stat-row">
-      <div class="row-label ${metric.toneClass}">
-        ${renderFunnelLadder(stage)}
-        <span>${escapeHtml(metric.label)}</span>
-      </div>
-
-      <div class="row-total ${metric.toneClass}">${formatNumber(total)}</div>
-
-      <div class="team-bars">
-        ${values.map(value => {
-          const ratio = max > 0 ? value / max : 0;
-          const height = value > 0 ? Math.max(ratio * 100, 6) : 0;
-
-          return `
-            <div class="team-cell ${metric.toneClass}">
-              <div class="bar-value">${formatNumber(value)}</div>
-              <div class="bar-fill" style="height: ${height}%;"></div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-  `;
-}
-
-// 3. AGENCY DETAIL SLIDES
-
-function renderTeamSlide(teamName, rows) {
-  const config = TEAM_SLIDE_CONFIG[teamName] || { metrics: STANDARD_TEAM_METRICS, showMtd: false };
-  const metrics = config.metrics;
-
-  const sortedRows = [...rows].sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
-  const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
-  const weekRows = sortedRows
-    .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
-    .sort((a, b) => getWeekNumber(b.CW) - getWeekNumber(a.CW));
-
-  let mtdIdv = 0;
-  let mtdTbk = 0;
-
-  if (config.mtdSource === "inline") {
-    mtdIdv = getInlineMtdValue(rows, "IDV (MTD)");
-    mtdTbk = getInlineMtdValue(rows, "TBK (MTD)");
-  } else {
-    mtdIdv = getTeamMtdValue(teamName, "IDV");
-    mtdTbk = getTeamMtdValue(teamName, "TBK");
-  }
-
-  const mtdChips = config.showMtd
-    ? `
-      <div class="mtd-chips">
-        <div class="mtd-chip tone-idv">
-          <span class="chip-label">IDV MTD</span>
-          <span class="chip-value">${formatNumber(mtdIdv)}</span>
-        </div>
-        <div class="mtd-chip tone-tbk">
-          <span class="chip-label">TBK MTD</span>
-          <span class="chip-value">${formatNumber(mtdTbk)}</span>
-        </div>
-      </div>
-    `
-    : "";
-
-  return `
-    <main class="slide team-slide">
-      <header class="slide-head">
-        <h1 class="slide-title">${escapeHtml(teamName)}</h1>
-        ${mtdChips}
-      </header>
-
-      <div class="team-col-heads">
-        <div></div>
-        <div class="col-head">Last 10 days</div>
-        <div class="col-head">Last 5 weeks</div>
-      </div>
-
-      <section class="metric-list">
-        ${metrics.map(metric => renderTeamRow(metric, dayRows, weekRows)).join("")}
-      </section>
-    </main>
-  `;
-}
-
-function renderTeamRow(metric, dayRows, weekRows) {
-  const stage = FUNNEL_STAGE[metric.stageKey] || 0;
-
-  const validDayRows = dayRows.filter(row => {
-    const value = row[metric.dayKey];
-    return value !== "" && value !== null && value !== undefined;
-  });
-
-  const validWeekRows = weekRows.filter(row => {
-    const value = row[metric.weekKey];
-    return value !== "" && value !== null && value !== undefined;
-  });
-
-  return `
-    <div class="stat-row">
-      <div class="row-label ${metric.toneClass}">
-        ${renderFunnelLadder(stage)}
-        <span>${escapeHtml(metric.label)}</span>
-      </div>
-
-      <div class="bars">
-        ${renderBars({
-          items: validDayRows,
-          valueKey: metric.dayKey,
-          labelKey: "Day",
-          toneClass: metric.toneClass,
-          latestIndex: 0
-        })}
-      </div>
-
-      <div class="bars weekly">
-        ${renderBars({
-          items: validWeekRows,
-          valueKey: metric.weekKey,
-          labelKey: "CW",
-          toneClass: metric.toneClass,
-          latestIndex: 0
-        })}
-      </div>
-    </div>
-  `;
-}
-
-// 4. CELEBRATION SLIDE (unchanged)
-
-function renderTriggerSlide(trigger) {
-  const metric = String(trigger.Metric || "").toUpperCase();
-  const type = String(trigger.Type || "").trim().toUpperCase();
-  const value = trigger.Value;
-
-  const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
-  const celebration = celebrations[metric] || celebrations.IDV || {};
-
-  // Type "PV" or "RETENTION" gets prefixed onto the metric in the title;
-  // "HP" (default) or anything else keeps just the metric (IDV/TBK).
-  const typePrefix = (type === "PV" || type === "RETENTION") ? `${type} ` : "";
-  const emoji = celebration.emoji || "🎉";
-  const title = `${emoji} NEW ${typePrefix}${metric} ${emoji}`;
-
-  const isPv = type === "PV";
-  const isRetention = type === "RETENTION";
-
-  let effect = celebration.effect || "confetti";
-  if (isPv && metric === "TBK") effect = "sun";
-  if (isRetention && metric === "TBK") effect = "buoy";
-
-  const themeClass = isPv ? "pv-theme" : (isRetention ? "retention-theme" : "");
-  const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
-
-  return `
-    <main class="gif-celebration ${themeClass}">
-      <div class="particle-field">${renderParticleField(effect)}</div>
-      <section class="gif-celebration-card">
-        <h1>${escapeHtml(title)}</h1>
-        <p>${escapeHtml(message)}</p>
-      </section>
-    </main>
-  `;
-}
-
-function renderParticleField(effect) {
-  if (effect === "money") {
-    return renderMoneyParticles(36);
-  }
-  if (effect === "sun") {
-    return renderEmojiParticles("☀️", 26);
-  }
-  if (effect === "buoy") {
-    return renderEmojiParticles("🛟", 26);
-  }
-  return renderConfettiParticles(30);
-}
-
-function renderEmojiParticles(emoji, count) {
-  let out = "";
-
-  for (let i = 0; i < count; i++) {
-    const left = (Math.random() * 100).toFixed(1);
-    const delay = (Math.random() * 2.6).toFixed(2);
-    const duration = (3.4 + Math.random() * 2.2).toFixed(2);
-    const size = (24 + Math.random() * 20).toFixed(0);
-    const rotate = (Math.random() * 20 - 10).toFixed(1);
-
-    out += `
-      <span
-        class="emoji-piece"
-        style="left: ${left}%; font-size: ${size}px; animation-delay: ${delay}s; animation-duration: ${duration}s; --start-rotate: ${rotate}deg;"
-      >${emoji}</span>
-    `;
-  }
-
-  return out;
-}
-
-function renderConfettiParticles(count) {
-  const shapes = ["circle", "rect"];
-  const tones = ["tone-a", "tone-b", "tone-c", "tone-d"];
-  let out = "";
-
-  for (let i = 0; i < count; i++) {
-    const left = (Math.random() * 100).toFixed(1);
-    const delay = (Math.random() * 2.6).toFixed(2);
-    const duration = (3.2 + Math.random() * 2.2).toFixed(2);
-    const size = (8 + Math.random() * 10).toFixed(0);
-    const shape = shapes[Math.floor(Math.random() * shapes.length)];
-    const tone = tones[Math.floor(Math.random() * tones.length)];
-
-    out += `
-      <span
-        class="confetti-piece ${shape} ${tone}"
-        style="left: ${left}%; width: ${size}px; height: ${size}px; animation-delay: ${delay}s; animation-duration: ${duration}s;"
-      ></span>
-    `;
-  }
-
-  return out;
-}
-
-function renderMoneyParticles(count) {
-  let out = "";
-
-  for (let i = 0; i < count; i++) {
-    const left = (Math.random() * 100).toFixed(1);
-    const delay = (Math.random() * 2.8).toFixed(2);
-    const duration = (3.6 + Math.random() * 2.2).toFixed(2);
-    const rotate = (Math.random() * 16 - 8).toFixed(1);
-
-    out += `
-      <span
-        class="money-bill"
-        style="left: ${left}%; animation-delay: ${delay}s; animation-duration: ${duration}s; --start-rotate: ${rotate}deg;"
-      >€</span>
-    `;
-  }
-
-  return out;
-}
-
-function renderFallbackSlide(slideId) {
-  return `
-    <main class="slide">
-      <header class="slide-head">
-        <h1 class="slide-title">${escapeHtml(slideId)}</h1>
-      </header>
-    </main>
-  `;
-}
-
-// ---------------------------------------------------------
-// audio / triggers
-// ---------------------------------------------------------
-
-function setupAudioPools() {
-  const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
-
-  Object.keys(celebrations).forEach(key => {
-    const sound = celebrations[key]?.sound;
-    if (!sound) return;
-
-    state.audioPools[key] = makeAudioPool(sound, 3);
-  });
-}
-
-function makeAudioPool(src, size = 3) {
-  const pool = [];
-
-  for (let i = 0; i < size; i++) {
-    const audio = new Audio(src);
-    audio.preload = "auto";
-    audio.load();
-    pool.push(audio);
-  }
-
-  return {
-    src,
-    pool,
-    index: 0
-  };
-}
-
-function playCelebrationSound(metric) {
-  const pool = state.audioPools[metric];
-  if (!pool || !pool.pool.length) return;
-
-  const audio = pool.pool[pool.index];
-  pool.index = (pool.index + 1) % pool.pool.length;
-
-  try {
-    audio.pause();
-    audio.currentTime = 0;
-
-    const playPromise = audio.play();
-
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(error => {
-        console.log("Audio play blocked or failed:", error);
-      });
-    }
-  } catch (error) {
-    console.log("Audio error:", error);
+  to {
+    transform: scaleY(1);
+    opacity: 1;
   }
 }
 
-function setupAudioUnlock() {
-  function unlockAudio() {
-    Object.values(state.audioPools).forEach(pool => {
-      pool.pool.forEach(audio => {
-        const previousVolume = audio.volume;
+.bar-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
 
-        audio.volume = 0;
+.bar-tick {
+  font-size: clamp(9px, 0.95vh, 12px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-top: 6px;
+  white-space: nowrap;
+  color: rgba(5, 40, 74, 0.5);
+}
 
-        const playPromise = audio.play();
+/* metric color tokens */
 
-        if (playPromise && typeof playPromise.then === "function") {
-          playPromise
-            .then(() => {
-              audio.pause();
-              audio.currentTime = 0;
-              audio.volume = previousVolume;
-            })
-            .catch(() => {
-              audio.volume = previousVolume;
-            });
-        } else {
-          audio.volume = previousVolume;
-        }
-      });
-    });
+.tone-pre {
+  color: var(--metric-orange);
+}
+.tone-pre .bar-fill {
+  background: var(--metric-orange);
+}
 
-    window.removeEventListener("keydown", unlockAudio);
-    window.removeEventListener("pointerdown", unlockAudio);
+.tone-pre-alt {
+  color: var(--enpal-orange-dark);
+}
+.tone-pre-alt .bar-fill {
+  background: var(--enpal-orange-dark);
+}
+
+.tone-successful {
+  color: var(--metric-yellow);
+}
+.tone-successful .bar-fill {
+  background: var(--metric-yellow);
+}
+
+.tone-idv {
+  color: var(--metric-light-blue);
+}
+.tone-idv .bar-fill {
+  background: var(--metric-light-blue);
+}
+
+.tone-tbk {
+  color: var(--metric-dark-blue);
+}
+.tone-tbk .bar-fill {
+  background: var(--metric-dark-blue);
+}
+
+/* =========================================================
+   1. LAST 6 WEEKS
+========================================================= */
+
+.last6-slide .stat-row {
+  grid-template-columns:
+    clamp(150px, 13vw, 220px)
+    minmax(0, 1fr)
+    clamp(140px, 12vw, 210px);
+}
+
+.last6-slide .row-label {
+  font-size: clamp(24px, 3.2vh, 40px);
+}
+
+.last6-slide .row-total {
+  font-size: clamp(38px, 5.4vh, 62px);
+}
+
+.last6-slide .bars {
+  padding: clamp(14px, 1.8vh, 22px) clamp(16px, 1.6vw, 26px) clamp(10px, 1.4vh, 16px);
+  gap: clamp(14px, 2vw, 30px);
+}
+
+.last6-slide .bar-fill {
+  min-height: 2px;
+}
+
+.last6-slide .bar-value {
+  font-size: clamp(14px, 1.5vh, 19px);
+}
+
+.last6-slide .bar-tick {
+  font-size: clamp(11px, 1.1vh, 14px);
+}
+
+.last6-slide .bar-col.latest .bar-tick {
+  font-weight: 900;
+  color: var(--enpal-navy);
+}
+
+.last6-slide .bar-col.latest .bar-value {
+  font-weight: 900;
+}
+
+/* =========================================================
+   2. DAILY LIVETICKER + OVERALL MTD
+========================================================= */
+
+.overview-slide .table-head {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns:
+    clamp(200px, 17vw, 300px)
+    clamp(100px, 8vw, 150px)
+    minmax(0, 1fr);
+  column-gap: clamp(20px, 2.2vw, 36px);
+  align-items: end;
+  padding-bottom: clamp(12px, 1.6vh, 18px);
+  border-bottom: 2px solid var(--hairline);
+  margin-bottom: clamp(6px, 0.8vh, 10px);
+}
+
+.overview-slide .table-head-total {
+  font-family: var(--font-display);
+  font-size: clamp(12px, 1.3vh, 16px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.42);
+  text-align: right;
+}
+
+.overview-slide .table-head-teams {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  text-align: center;
+}
+
+.overview-slide .table-head-teams div {
+  font-size: clamp(20px, 2.6vh, 32px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--enpal-navy);
+}
+
+.overview-slide .stat-row {
+  grid-template-columns:
+    clamp(200px, 17vw, 300px)
+    clamp(100px, 8vw, 150px)
+    minmax(0, 1fr);
+}
+
+.overview-slide .row-label {
+  font-size: clamp(16px, 1.9vh, 24px);
+}
+
+.overview-slide .row-total {
+  font-size: clamp(24px, 3.4vh, 42px);
+}
+
+.overview-slide .team-bars {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(5, 40, 74, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(5, 40, 74, 0.08);
+  padding-top: clamp(10px, 1.4vh, 16px);
+}
+
+.overview-slide .team-cell {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 clamp(10px, 1.4vw, 26px) clamp(10px, 1.4vh, 16px);
+}
+
+.overview-slide .team-cell .bar-fill {
+  width: clamp(64px, 5.6vw, 100px);
+}
+
+.overview-slide .bar-value {
+  font-size: clamp(13px, 1.35vh, 17px);
+}
+
+/* =========================================================
+   3. AGENCY DETAIL SLIDES
+========================================================= */
+
+.team-slide .slide-head {
+  align-items: center;
+}
+
+.team-slide .slide-title {
+  font-size: clamp(38px, 5.6vh, 64px);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mtd-chips {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.2vw, 18px);
+  flex: 0 0 auto;
+}
+
+.mtd-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: clamp(8px, 1vh, 12px) clamp(16px, 1.6vw, 24px);
+  border-radius: 999px;
+  background: rgba(5, 40, 74, 0.05);
+}
+
+.mtd-chip .chip-label {
+  font-size: clamp(12px, 1.3vh, 16px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mtd-chip .chip-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(20px, 2.6vh, 32px);
+  color: var(--enpal-navy);
+}
+
+.mtd-chip.tone-idv {
+  background: rgba(90, 167, 255, 0.14);
+}
+
+.mtd-chip.tone-tbk {
+  background: rgba(5, 40, 74, 0.1);
+}
+
+.team-col-heads {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns:
+    clamp(210px, 17vw, 300px)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  column-gap: clamp(24px, 2.4vw, 40px);
+  padding-bottom: clamp(8px, 1.1vh, 12px);
+  border-bottom: 2px solid var(--hairline);
+  margin-bottom: clamp(4px, 0.6vh, 8px);
+}
+
+.team-col-heads .col-head {
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.3vh, 16px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.42);
+}
+
+.team-slide .stat-row {
+  grid-template-columns:
+    clamp(210px, 17vw, 300px)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+}
+
+.team-slide .row-label {
+  font-size: clamp(15px, 1.8vh, 23px);
+  line-height: 1.15;
+}
+
+.team-slide .row-label span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.team-slide .bars {
+  padding: clamp(8px, 1.1vh, 12px) clamp(8px, 1vw, 14px) clamp(6px, 0.9vh, 10px);
+  gap: clamp(4px, 0.7vw, 10px);
+}
+
+.team-slide .bars.weekly {
+  gap: clamp(10px, 1.4vw, 22px);
+}
+
+.team-slide .bar-value {
+  font-size: clamp(9px, 1vh, 12px);
+  opacity: 0.92;
+}
+
+.team-slide .bar-tick {
+  font-size: clamp(8px, 0.85vh, 10px);
+}
+
+.team-slide .bar-col.latest .bar-value {
+  opacity: 1;
+  font-weight: 900;
+}
+
+.team-slide .bar-col.latest .bar-tick {
+  color: var(--enpal-navy);
+  font-weight: 800;
+}
+
+.team-slide .bar-col:not(.latest) .bar-fill {
+  opacity: 0.72;
+}
+
+/* =========================================================
+   4. CELEBRATION SLIDE (on-brand, no external media)
+========================================================= */
+
+.gif-celebration {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 999999;
+  overflow: hidden;
+
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 214, 90, 0.22), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(90, 167, 255, 0.18), transparent 50%),
+    linear-gradient(160deg, var(--enpal-navy) 0%, var(--enpal-navy-2) 55%, #071d33 100%);
+
+  color: #ffffff;
+  text-align: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  padding: 60px 8vw;
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+
+.gif-celebration.pv-theme {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.28), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.16), transparent 50%),
+    linear-gradient(160deg, #ffe07a 0%, #ffb703 55%, #fb8500 100%);
+
+  color: var(--enpal-navy);
+}
+
+.gif-celebration.pv-theme .gif-celebration-card {
+  background: linear-gradient(135deg, rgba(5, 40, 74, 0.16), rgba(5, 40, 74, 0.06));
+  border-color: rgba(5, 40, 74, 0.22);
+}
+
+.gif-celebration.pv-theme p {
+  color: rgba(5, 40, 74, 0.78);
+}
+
+.gif-celebration.retention-theme {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.3), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.18), transparent 50%),
+    linear-gradient(160deg, #cbe8ff 0%, #8ecdf5 55%, #4fa3dd 100%);
+
+  color: var(--enpal-navy);
+}
+
+.gif-celebration.retention-theme .gif-celebration-card {
+  background: linear-gradient(135deg, rgba(5, 40, 74, 0.16), rgba(5, 40, 74, 0.06));
+  border-color: rgba(5, 40, 74, 0.22);
+}
+
+.gif-celebration.retention-theme p {
+  color: rgba(5, 40, 74, 0.78);
+}
+
+.particle-field {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --- confetti (IDV) --- */
+
+.confetti-piece {
+  position: absolute;
+  top: -6vh;
+  opacity: 0;
+  will-change: transform;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
+.confetti-piece.circle {
+  border-radius: 50%;
+}
+
+.confetti-piece.rect {
+  border-radius: 3px;
+}
+
+.confetti-piece.tone-a {
+  background: var(--enpal-orange-dark);
+}
+.confetti-piece.tone-b {
+  background: var(--metric-light-blue);
+}
+.confetti-piece.tone-c {
+  background: #ffffff;
+}
+.confetti-piece.tone-d {
+  background: var(--metric-yellow);
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(112vh) rotate(420deg);
+    opacity: 0.85;
+  }
+}
+
+/* --- falling money (TBK) --- */
+
+.money-bill {
+  position: absolute;
+  top: -8vh;
+  width: clamp(34px, 3vw, 50px);
+  height: clamp(22px, 2vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #e7c86b, #8fae5a);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  color: rgba(5, 40, 74, 0.75);
+  font-weight: 900;
+  font-size: clamp(14px, 1.4vw, 20px);
+  opacity: 0;
+  will-change: transform;
+  animation-name: money-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes money-fall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(var(--start-rotate));
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(25vh) translateX(22px) rotate(calc(var(--start-rotate) * -1));
+  }
+  50% {
+    transform: translateY(52vh) translateX(-22px) rotate(var(--start-rotate));
+  }
+  75% {
+    transform: translateY(80vh) translateX(22px) rotate(calc(var(--start-rotate) * -1));
+  }
+  100% {
+    transform: translateY(112vh) translateX(0) rotate(var(--start-rotate));
+    opacity: 0.9;
+  }
+}
+
+/* --- falling emoji particles: sun (PV) / life buoy (Retention) --- */
+
+.emoji-piece {
+  position: absolute;
+  top: -8vh;
+  line-height: 1;
+  opacity: 0;
+  will-change: transform;
+  animation-name: emoji-fall;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
+@keyframes emoji-fall {
+  0% {
+    transform: translateY(0) rotate(var(--start-rotate));
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(112vh) rotate(calc(var(--start-rotate) + 360deg));
+    opacity: 0.95;
+  }
+}
+
+.gif-celebration-card {
+  position: relative;
+  z-index: 1;
+  width: min(1400px, 92vw);
+  background: linear-gradient(135deg, rgba(11, 40, 74, 0.55), rgba(11, 40, 74, 0.4));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 26px;
+  padding: 34px 44px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.gif-celebration h1 {
+  font-size: clamp(28px, 6vw, 82px);
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.gif-celebration p {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2.4vw, 32px);
+  margin: 16px 0 0;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* =========================================================
+   SHORT SCREEN PROTECTION
+========================================================= */
+
+@media (max-height: 820px) {
+  .slide {
+    padding: 24px 30px;
   }
 
-  window.addEventListener("keydown", unlockAudio, { once: true });
-  window.addEventListener("pointerdown", unlockAudio, { once: true });
+  .slide-head {
+    margin-bottom: 18px;
+  }
 }
 
-// ---------------------------------------------------------
-// helpers
-// ---------------------------------------------------------
+/* =========================================================
+   NARROW SCREEN PROTECTION
+========================================================= */
 
-function getTeamMtdValue(teamName, metric) {
-  const row = (state.data?.mtd || []).find(item => {
-    return String(item["Daily Stats"] || "").toUpperCase() === String(teamName).toUpperCase();
-  });
+@media (max-width: 900px) {
+  .slide {
+    padding: 22px 24px;
+  }
 
-  return Number(row?.[metric] || 0);
-}
+  .overview-slide .table-head,
+  .overview-slide .stat-row {
+    grid-template-columns: 150px 80px minmax(0, 1fr);
+    column-gap: 12px;
+  }
 
-function getInlineMtdValue(rows, key) {
-  const row = rows.find(item => item[key] !== "" && item[key] !== null && item[key] !== undefined);
-  return Number(row?.[key] || 0);
-}
+  .team-col-heads,
+  .team-slide .stat-row {
+    grid-template-columns: 130px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 12px;
+  }
 
-function hasAnyWeeklyValue(row, metrics) {
-  return metrics.some(metric => {
-    const value = row[metric.weekKey];
-    return value !== "" && value !== null && value !== undefined;
-  });
-}
+  .last6-slide .stat-row {
+    grid-template-columns: 110px minmax(0, 1fr) 120px;
+    column-gap: 12px;
+  }
 
-function getWeekNumber(value) {
-  const text = String(value || "").trim().toLowerCase();
-
-  if (text === "this week") return Infinity;
-
-  const match = text.match(/\d+/);
-  return match ? Number(match[0]) : 0;
-}
-
-function formatNumber(value) {
-  const number = Number(value || 0);
-  return String(Math.round(number));
-}
-
-function toBoolean(value) {
-  if (value === true) return true;
-
-  const text = String(value || "").toLowerCase().trim();
-
-  return text === "true" || text === "yes" || text === "ja" || text === "1";
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function escapeAttribute(value) {
-  return String(value ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'")
-    .replace(/"/g, "&quot;");
-}
-
-function showError(error) {
-  console.error(error);
-
-  errorBox.classList.remove("hidden");
-  errorMessage.textContent = error.message || String(error);
-}
-
-function hideError() {
-  errorBox.classList.add("hidden");
-  errorMessage.textContent = "";
+  .row-label {
+    font-size: 16px !important;
+  }
 }

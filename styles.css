@@ -458,6 +458,15 @@ body {
   font-size: clamp(11px, 1.1vh, 14px);
 }
 
+.last6-slide .bar-col.latest .bar-tick {
+  font-weight: 900;
+  color: var(--enpal-navy);
+}
+
+.last6-slide .bar-col.latest .bar-value {
+  font-weight: 900;
+}
+
 /* =========================================================
    2. DAILY LIVETICKER + OVERALL MTD
 ========================================================= */

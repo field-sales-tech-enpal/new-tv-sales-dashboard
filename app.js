@@ -347,7 +347,10 @@ function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
 
 function renderLast6WeeksSlide(rows) {
   const weeklyRows = rows
-    .filter(row => String(row["Calendar Week"] || "").startsWith("CW"))
+    .filter(row => {
+      const label = String(row["Calendar Week"] || "").trim().toLowerCase();
+      return label !== "" && label !== "all time";
+    })
     .sort((a, b) => Number(a["Weeks from Now"]) - Number(b["Weeks from Now"]));
 
   const allTimeRow = rows.find(row => {
@@ -800,7 +803,11 @@ function hasAnyWeeklyValue(row, metrics) {
 }
 
 function getWeekNumber(value) {
-  const match = String(value || "").match(/\d+/);
+  const text = String(value || "").trim().toLowerCase();
+
+  if (text === "this week") return Infinity;
+
+  const match = text.match(/\d+/);
   return match ? Number(match[0]) : 0;
 }
 

@@ -6,6 +6,7 @@ const state = {
   refreshTimer: null,
   triggerRefreshTimer: null,
   triggerTimer: null,
+  soundDelayTimer: null,
   lastShownTriggerId: localStorage.getItem("lastShownTriggerId") || "",
   lastShownSignature: localStorage.getItem("lastShownSignature") || "",
   lastShownAt: Number(localStorage.getItem("lastShownAt") || 0),
@@ -210,7 +211,17 @@ function showTriggerSlide(trigger) {
   fitCelebrationTitle();
 
   const metric = String(trigger.Metric || "").toUpperCase();
-  playCelebrationSound(metric);
+
+  const soundDelaySeconds = Number(
+    state.data?.config?.celebrationSoundDelaySeconds ||
+    window.DASHBOARD_CONFIG.DEFAULT_CELEBRATION_SOUND_DELAY_SECONDS ||
+    3
+  );
+
+  clearTimeout(state.soundDelayTimer);
+  state.soundDelayTimer = setTimeout(() => {
+    playCelebrationSound(metric);
+  }, soundDelaySeconds * 1000);
 
   clearTimeout(state.triggerTimer);
 
@@ -593,11 +604,21 @@ function renderTriggerSlide(trigger) {
   const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
   const celebration = celebrations[metric] || celebrations.IDV || {};
 
-  // Type "PV" or "RETENTION" gets prefixed onto the metric in the title;
-  // "HP" (default) or anything else keeps just the metric (IDV/TBK).
-  const typePrefix = (type === "PV" || type === "RETENTION") ? `${type} ` : "";
+  // Type "PV" or "RETENTION" gets prefixed onto the metric in the title.
+  // "HP" (default) or anything else shows the team from the trigger sheet
+  // instead: "NEW <TEAM> <METRIC>".
   const emoji = celebration.emoji || "🎉";
-  const title = `${emoji} NEW ${typePrefix}${metric} ${emoji}`;
+  let titleMiddle;
+
+  if (type === "PV" || type === "RETENTION") {
+    titleMiddle = `${type} ${metric}`;
+  } else {
+    const team = String(trigger.Team || "").trim().toUpperCase();
+    const teamLabel = team ? getTeamDisplayName(team) : "";
+    titleMiddle = teamLabel ? `${teamLabel} ${metric}` : metric;
+  }
+
+  const title = `${emoji} NEW ${titleMiddle} ${emoji}`;
 
   const isPv = type === "PV";
   const isRetention = type === "RETENTION";

@@ -371,6 +371,18 @@ const TEAM_SLIDE_CONFIG = {
   }
 };
 
+// Bar heights use a curved (not linear) scale: raising the value/max ratio
+// to a power > 1 stretches out differences between values that are close
+// together (e.g. 245 vs 302 would look almost identical bar height on a
+// straight linear scale, since both are already most of the way to max).
+const BAR_HEIGHT_CURVE = 1.6;
+
+function scaleBarHeight(value, max) {
+  if (!(max > 0) || !(value > 0)) return 0;
+  const ratio = Math.min(value / max, 1);
+  return Math.max(Math.pow(ratio, BAR_HEIGHT_CURVE) * 100, 6);
+}
+
 function renderFunnelLadder(stage) {
   let rungs = "";
   for (let i = 1; i <= 5; i++) {
@@ -384,7 +396,7 @@ function renderBars({ items, valueKey, labelKey, toneClass, latestIndex }) {
 
   return items.map((row, index) => {
     const value = Number(row[valueKey] || 0);
-    const height = Math.max((value / max) * 100, value > 0 ? 6 : 0);
+    const height = scaleBarHeight(value, max);
     const isLatest = latestIndex !== undefined ? index === latestIndex : false;
 
     return `
@@ -510,8 +522,7 @@ function renderOverviewRow(metric, rows, teamsToShow) {
 
       <div class="team-bars">
         ${values.map(value => {
-          const ratio = max > 0 ? value / max : 0;
-          const height = value > 0 ? Math.max(ratio * 100, 6) : 0;
+          const height = scaleBarHeight(value, max);
 
           return `
             <div class="team-cell ${metric.toneClass}">
@@ -654,10 +665,10 @@ function renderFieldSalesSlide(rows) {
   });
 
   const allTimeGroup = renderFieldSalesSummaryGroup("All Time", {
-    idvPv: getInlineValue(rows, "IDV PV (All time)"),
-    idvKombi: getInlineValue(rows, "IDV Kombi (All time)"),
-    tbkPv: getInlineValue(rows, "TBK PV (All time)"),
-    tbkKombi: getInlineValue(rows, "TBK Kombi (All time)")
+    idvPv: getInlineValue(rows, "IDV PV (All Time)"),
+    idvKombi: getInlineValue(rows, "IDV Kombi (All Time)"),
+    tbkPv: getInlineValue(rows, "TBK PV (All Time)"),
+    tbkKombi: getInlineValue(rows, "TBK Kombi (All Time)")
   });
 
   return `
@@ -757,7 +768,7 @@ function renderFieldSalesStackedBars(rows, pvKey, kombiKey, labelKey, toneClass)
 
   return items.map((item, index) => {
     const total = item.pv + item.kombi;
-    const totalPct = Math.max((total / max) * 100, total > 0 ? 6 : 0);
+    const totalPct = scaleBarHeight(total, max);
     const pvShare = total > 0 ? item.pv / total : 0;
     const kombiShare = total > 0 ? item.kombi / total : 0;
     const isLatest = index === 0;

@@ -411,6 +411,10 @@ body {
 .tone-idv {
   color: var(--metric-light-blue);
 }
+
+.tone-idv .bar-value {
+  color: var(--enpal-navy);
+}
 .tone-idv .bar-fill {
   background: var(--metric-light-blue);
 }
@@ -574,31 +578,34 @@ body {
 .mtd-chips {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.2vw, 18px);
+  gap: clamp(8px, 1vw, 14px);
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .mtd-chip {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: clamp(8px, 1vh, 12px) clamp(16px, 1.6vw, 24px);
+  gap: 8px;
+  padding: clamp(7px, 0.9vh, 11px) clamp(13px, 1.3vw, 20px);
   border-radius: 999px;
   background: rgba(5, 40, 74, 0.05);
 }
 
 .mtd-chip .chip-label {
-  font-size: clamp(12px, 1.3vh, 16px);
+  font-size: clamp(11px, 1.15vh, 14px);
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .mtd-chip .chip-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: clamp(20px, 2.6vh, 32px);
+  font-size: clamp(17px, 2.2vh, 27px);
   color: var(--enpal-navy);
 }
 
@@ -609,6 +616,89 @@ body {
 .mtd-chip.tone-tbk {
   background: rgba(5, 40, 74, 0.1);
 }
+
+.summary-groups {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(12px, 1.4vw, 22px);
+  flex: 0 0 auto;
+}
+
+.summary-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 5px;
+  padding: clamp(9px, 1.1vh, 13px) clamp(16px, 1.6vw, 24px);
+  border-radius: 16px;
+  background: rgba(5, 40, 74, 0.05);
+  border: 1px solid rgba(5, 40, 74, 0.08);
+}
+
+.summary-group-label {
+  font-size: clamp(10px, 1.05vh, 13px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(5, 40, 74, 0.5);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.summary-metric-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.summary-metric-row:not(:last-child) {
+  margin-bottom: 3px;
+}
+
+.summary-metric-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.summary-metric-name {
+  font-size: clamp(11px, 1.15vh, 14px);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  width: 30px;
+  flex: 0 0 auto;
+  color: rgba(5, 40, 74, 0.55);
+}
+
+.summary-metric-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: clamp(18px, 2.2vh, 27px);
+  color: var(--enpal-navy);
+}
+
+.summary-metric-breakdown {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(11px, 1.2vh, 14px);
+  padding-left: 40px;
+}
+
+.summary-metric-breakdown .breakdown-sep {
+  opacity: 0.35;
+  font-weight: 700;
+}
+
+.summary-metric-row.idv-row .pv-value { color: #5aa7ff; }
+.summary-metric-row.idv-row .kombi-value { color: var(--enpal-orange-dark); }
+.summary-metric-row.tbk-row .pv-value { color: #05284a; }
+.summary-metric-row.tbk-row .kombi-value { color: var(--enpal-orange-dark); }
 
 .team-col-heads {
   flex: 0 0 auto;
@@ -749,6 +839,42 @@ body {
 }
 
 .gif-celebration.retention-theme p {
+  color: rgba(5, 40, 74, 0.78);
+}
+
+.gif-celebration.fieldsales-pv-theme {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.22), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.12), transparent 50%),
+    linear-gradient(160deg, #6fa3f5 0%, #2f6fd9 55%, #163f7a 100%);
+
+  color: #ffffff;
+}
+
+.gif-celebration.fieldsales-pv-theme .gif-celebration-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.gif-celebration.fieldsales-pv-theme p {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.gif-celebration.fieldsales-kombi-theme {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.3), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.18), transparent 50%),
+    linear-gradient(160deg, #fff3b0 0%, #ffd65a 55%, #ffbd00 100%);
+
+  color: var(--enpal-navy);
+}
+
+.gif-celebration.fieldsales-kombi-theme .gif-celebration-card {
+  background: linear-gradient(135deg, rgba(5, 40, 74, 0.16), rgba(5, 40, 74, 0.06));
+  border-color: rgba(5, 40, 74, 0.22);
+}
+
+.gif-celebration.fieldsales-kombi-theme p {
   color: rgba(5, 40, 74, 0.78);
 }
 
@@ -957,3 +1083,92 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* =========================================================
+   STACKED BARS: PV (bottom) + Kombi (top) per metric
+========================================================= */
+
+.bar-stack {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.bar-segment {
+  width: 100%;
+  min-height: 0;
+}
+
+.bar-segment.kombi {
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bar-segment.pv {
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.segment-label {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: clamp(10px, 1.15vh, 14px);
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+}
+
+.tone-idv .bar-segment.pv {
+  background: #5aa7ff;
+}
+
+.tone-idv .bar-segment.kombi {
+  background: var(--enpal-orange);
+}
+
+.tone-tbk .bar-segment.pv {
+  background: #05284a;
+}
+
+.tone-tbk .bar-segment.kombi {
+  background: var(--enpal-orange-dark);
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 1.8vw, 28px);
+  flex: 0 0 auto;
+  margin-bottom: clamp(6px, 0.9vh, 10px);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(12px, 1.3vh, 15px);
+  font-weight: 700;
+  color: rgba(5, 40, 74, 0.6);
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legend-swatch.idv-pv { background: #5aa7ff; }
+.legend-swatch.idv-kombi { background: var(--enpal-orange); }
+.legend-swatch.tbk-pv { background: #05284a; }
+.legend-swatch.tbk-kombi { background: var(--enpal-orange-dark); }

@@ -1,6 +1,6 @@
 const state = {
   data: null,
-  slides: ["last6Weeks", "daily", "mtd", "NOVA", "VF", "MHM", "Retention"],
+  slides: ["last6Weeks", "daily", "mtd", "NOVA", "VF", "MHM", "Retention", "Field Sales"],
   currentSlideIndex: 0,
   rotationTimer: null,
   refreshTimer: null,
@@ -210,7 +210,7 @@ function showTriggerSlide(trigger) {
   slideRoot.innerHTML = renderTriggerSlide(trigger);
   fitCelebrationTitle();
 
-  const metric = String(trigger.Metric || "").toUpperCase();
+  const baseMetric = getBaseMetric(trigger.Metric);
 
   const soundDelaySeconds = Number(
     state.data?.config?.celebrationSoundDelaySeconds ||
@@ -220,7 +220,7 @@ function showTriggerSlide(trigger) {
 
   clearTimeout(state.soundDelayTimer);
   state.soundDelayTimer = setTimeout(() => {
-    playCelebrationSound(metric);
+    playCelebrationSound(baseMetric);
   }, soundDelaySeconds * 1000);
 
   clearTimeout(state.triggerTimer);
@@ -284,6 +284,11 @@ function renderCurrentSlide() {
     return;
   }
 
+  if (slideId === "Field Sales") {
+    slideRoot.innerHTML = renderFieldSalesSlide(state.data.teams?.["Field Sales"] || []);
+    return;
+  }
+
   slideRoot.innerHTML = renderFallbackSlide(slideId);
 }
 
@@ -330,13 +335,40 @@ const RETENTION_TEAM_METRICS = [
   { label: "TBK", dayKey: "TBK (days)", weekKey: "TBK (weeks)", toneClass: "tone-tbk", stageKey: "TBK" }
 ];
 
-// Per-slide config: which metric set to use, and whether to show the
-// MTD chips (Retention isn't tracked in the MTD sheet, so it's hidden there).
+// Per-slide config: which metric set to use, and which summary chips to
+// show in the header. Each chip pulls its value from one of two sources:
+//   "sheet"  - the shared MTD sheet, matched by team name (NOVA/VF/MHM)
+//   "inline" - a column that lives directly on the slide's own sheet,
+//              e.g. Retention's "IDV (MTD)"
 const TEAM_SLIDE_CONFIG = {
-  NOVA: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  VF: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  MHM: { metrics: STANDARD_TEAM_METRICS, showMtd: true, mtdSource: "sheet" },
-  Retention: { metrics: RETENTION_TEAM_METRICS, showMtd: true, mtdSource: "inline" }
+  NOVA: {
+    metrics: STANDARD_TEAM_METRICS,
+    summaryChips: [
+      { label: "IDV MTD", toneClass: "tone-idv", source: "sheet", key: "IDV" },
+      { label: "TBK MTD", toneClass: "tone-tbk", source: "sheet", key: "TBK" }
+    ]
+  },
+  VF: {
+    metrics: STANDARD_TEAM_METRICS,
+    summaryChips: [
+      { label: "IDV MTD", toneClass: "tone-idv", source: "sheet", key: "IDV" },
+      { label: "TBK MTD", toneClass: "tone-tbk", source: "sheet", key: "TBK" }
+    ]
+  },
+  MHM: {
+    metrics: STANDARD_TEAM_METRICS,
+    summaryChips: [
+      { label: "IDV MTD", toneClass: "tone-idv", source: "sheet", key: "IDV" },
+      { label: "TBK MTD", toneClass: "tone-tbk", source: "sheet", key: "TBK" }
+    ]
+  },
+  Retention: {
+    metrics: RETENTION_TEAM_METRICS,
+    summaryChips: [
+      { label: "IDV MTD", toneClass: "tone-idv", source: "inline", key: "IDV (MTD)" },
+      { label: "TBK MTD", toneClass: "tone-tbk", source: "inline", key: "TBK (MTD)" }
+    ]
+  }
 };
 
 function renderFunnelLadder(stage) {
@@ -495,8 +527,43 @@ function renderOverviewRow(metric, rows, teamsToShow) {
 
 // 3. AGENCY DETAIL SLIDES
 
+function renderTeamSummary(config, rows, teamName) {
+  const resolveValue = (chip) => chip.source === "inline"
+    ? getInlineValue(rows, chip.key)
+    : getTeamMtdValue(teamName, chip.key);
+
+  if (config.summaryGroups) {
+    const groups = config.summaryGroups.map(group => {
+      const items = group.chips.map(chip => `
+        <div class="summary-group-item ${chip.toneClass}">
+          <span class="item-label">${escapeHtml(chip.label)}</span>
+          <span class="item-value">${formatNumber(resolveValue(chip))}</span>
+        </div>
+      `).join("");
+
+      return `
+        <div class="summary-group">
+          <div class="summary-group-label">${escapeHtml(group.label)}</div>
+          <div class="summary-group-values">${items}</div>
+        </div>
+      `;
+    }).join("");
+
+    return `<div class="summary-groups">${groups}</div>`;
+  }
+
+  const chips = (config.summaryChips || []).map(chip => `
+    <div class="mtd-chip ${chip.toneClass}">
+      <span class="chip-label">${escapeHtml(chip.label)}</span>
+      <span class="chip-value">${formatNumber(resolveValue(chip))}</span>
+    </div>
+  `).join("");
+
+  return chips ? `<div class="mtd-chips">${chips}</div>` : "";
+}
+
 function renderTeamSlide(teamName, rows) {
-  const config = TEAM_SLIDE_CONFIG[teamName] || { metrics: STANDARD_TEAM_METRICS, showMtd: false };
+  const config = TEAM_SLIDE_CONFIG[teamName] || { metrics: STANDARD_TEAM_METRICS, summaryChips: [] };
   const metrics = config.metrics;
 
   const sortedRows = [...rows].sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
@@ -505,37 +572,13 @@ function renderTeamSlide(teamName, rows) {
     .filter(row => String(row.CW || "").trim() !== "" && hasAnyWeeklyValue(row, metrics))
     .sort((a, b) => getWeekNumber(b.CW) - getWeekNumber(a.CW));
 
-  let mtdIdv = 0;
-  let mtdTbk = 0;
-
-  if (config.mtdSource === "inline") {
-    mtdIdv = getInlineMtdValue(rows, "IDV (MTD)");
-    mtdTbk = getInlineMtdValue(rows, "TBK (MTD)");
-  } else {
-    mtdIdv = getTeamMtdValue(teamName, "IDV");
-    mtdTbk = getTeamMtdValue(teamName, "TBK");
-  }
-
-  const mtdChips = config.showMtd
-    ? `
-      <div class="mtd-chips">
-        <div class="mtd-chip tone-idv">
-          <span class="chip-label">IDV MTD</span>
-          <span class="chip-value">${formatNumber(mtdIdv)}</span>
-        </div>
-        <div class="mtd-chip tone-tbk">
-          <span class="chip-label">TBK MTD</span>
-          <span class="chip-value">${formatNumber(mtdTbk)}</span>
-        </div>
-      </div>
-    `
-    : "";
+  const summaryMarkup = renderTeamSummary(config, rows, teamName);
 
   return `
     <main class="slide team-slide">
       <header class="slide-head">
         <h1 class="slide-title">${escapeHtml(getTeamDisplayName(teamName))}</h1>
-        ${mtdChips}
+        ${summaryMarkup}
       </header>
 
       <div class="team-col-heads">
@@ -594,40 +637,209 @@ function renderTeamRow(metric, dayRows, weekRows) {
   `;
 }
 
+// 3b. FIELD SALES - stacked PV/Kombi bars (IDV and TBK only)
+
+function renderFieldSalesSlide(rows) {
+  const sortedRows = [...rows].sort((a, b) => Number(a.Sort || 0) - Number(b.Sort || 0));
+  const dayRows = sortedRows.filter(row => String(row.Day || "").trim() !== "");
+  const weekRows = sortedRows
+    .filter(row => String(row.CW || "").trim() !== "" && hasAnyFieldSalesWeeklyValue(row))
+    .sort((a, b) => getWeekNumber(b.CW) - getWeekNumber(a.CW));
+
+  const mtdGroup = renderFieldSalesSummaryGroup("MTD", {
+    idvPv: getInlineValue(rows, "IDV PV (MTD)"),
+    idvKombi: getInlineValue(rows, "IDV Kombi (MTD)"),
+    tbkPv: getInlineValue(rows, "TBK PV (MTD)"),
+    tbkKombi: getInlineValue(rows, "TBK Kombi (MTD)")
+  });
+
+  const allTimeGroup = renderFieldSalesSummaryGroup("All Time", {
+    idvPv: getInlineValue(rows, "IDV PV (All time)"),
+    idvKombi: getInlineValue(rows, "IDV Kombi (All time)"),
+    tbkPv: getInlineValue(rows, "TBK PV (All time)"),
+    tbkKombi: getInlineValue(rows, "TBK Kombi (All time)")
+  });
+
+  return `
+    <main class="slide team-slide field-sales-slide">
+      <header class="slide-head">
+        <h1 class="slide-title">Field Sales</h1>
+        <div class="summary-groups">${mtdGroup}${allTimeGroup}</div>
+      </header>
+
+      <div class="chart-legend">
+        <div class="legend-item"><span class="legend-swatch idv-pv"></span>IDV PV</div>
+        <div class="legend-item"><span class="legend-swatch idv-kombi"></span>IDV Kombi</div>
+        <div class="legend-item"><span class="legend-swatch tbk-pv"></span>TBK PV</div>
+        <div class="legend-item"><span class="legend-swatch tbk-kombi"></span>TBK Kombi</div>
+      </div>
+
+      <div class="team-col-heads">
+        <div></div>
+        <div class="col-head">Last 10 days</div>
+        <div class="col-head">Last 5 weeks</div>
+      </div>
+
+      <section class="metric-list">
+        ${renderFieldSalesRow("IDV", "tone-idv", dayRows, weekRows, "IDV PV (days)", "IDV Kombi (days)", "IDV PV (weeks)", "IDV Kombi (weeks)")}
+        ${renderFieldSalesRow("TBK", "tone-tbk", dayRows, weekRows, "TBK PV (days)", "TBK Kombi (days)", "TBK PV (weeks)", "TBK Kombi (weeks)")}
+      </section>
+    </main>
+  `;
+}
+
+function renderFieldSalesSummaryGroup(label, values) {
+  const idvTotal = values.idvPv + values.idvKombi;
+  const tbkTotal = values.tbkPv + values.tbkKombi;
+
+  return `
+    <div class="summary-group">
+      <div class="summary-group-label">${escapeHtml(label)}</div>
+      <div class="summary-metric-row idv-row">
+        <div class="summary-metric-top">
+          <span class="summary-metric-name">IDV</span>
+          <span class="summary-metric-total">${formatNumber(idvTotal)}</span>
+        </div>
+        <div class="summary-metric-breakdown">
+          <span class="pv-value">${formatNumber(values.idvPv)}</span>
+          <span class="breakdown-sep">+</span>
+          <span class="kombi-value">${formatNumber(values.idvKombi)}</span>
+        </div>
+      </div>
+      <div class="summary-metric-row tbk-row">
+        <div class="summary-metric-top">
+          <span class="summary-metric-name">TBK</span>
+          <span class="summary-metric-total">${formatNumber(tbkTotal)}</span>
+        </div>
+        <div class="summary-metric-breakdown">
+          <span class="pv-value">${formatNumber(values.tbkPv)}</span>
+          <span class="breakdown-sep">+</span>
+          <span class="kombi-value">${formatNumber(values.tbkKombi)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFieldSalesRow(label, toneClass, dayRows, weekRows, pvDayKey, kombiDayKey, pvWeekKey, kombiWeekKey) {
+  const stage = FUNNEL_STAGE[label] || 0;
+
+  const validDayRows = dayRows.filter(row => hasEither(row, pvDayKey, kombiDayKey));
+  const validWeekRows = weekRows.filter(row => hasEither(row, pvWeekKey, kombiWeekKey));
+
+  return `
+    <div class="stat-row">
+      <div class="row-label ${toneClass}">
+        ${renderFunnelLadder(stage)}
+        <span>${escapeHtml(label)}</span>
+      </div>
+
+      <div class="bars">
+        ${renderFieldSalesStackedBars(validDayRows, pvDayKey, kombiDayKey, "Day", toneClass)}
+      </div>
+
+      <div class="bars weekly">
+        ${renderFieldSalesStackedBars(validWeekRows, pvWeekKey, kombiWeekKey, "CW", toneClass)}
+      </div>
+    </div>
+  `;
+}
+
+function renderFieldSalesStackedBars(rows, pvKey, kombiKey, labelKey, toneClass) {
+  const items = rows.map(row => ({
+    pv: Number(row[pvKey] || 0),
+    kombi: Number(row[kombiKey] || 0),
+    label: row[labelKey]
+  }));
+
+  const totals = items.map(i => i.pv + i.kombi);
+  const max = Math.max(...totals, 1);
+
+  return items.map((item, index) => {
+    const total = item.pv + item.kombi;
+    const totalPct = Math.max((total / max) * 100, total > 0 ? 6 : 0);
+    const pvShare = total > 0 ? item.pv / total : 0;
+    const kombiShare = total > 0 ? item.kombi / total : 0;
+    const isLatest = index === 0;
+
+    const kombiLabel = item.kombi > 0 ? `<span class="segment-label">${formatNumber(item.kombi)}</span>` : "";
+    const pvLabel = item.pv > 0 ? `<span class="segment-label">${formatNumber(item.pv)}</span>` : "";
+
+    return `
+      <div class="bar-col ${toneClass} ${isLatest ? "latest" : ""}">
+        <div class="bar-value">${formatNumber(total)}</div>
+        <div class="bar-stack" style="height: ${totalPct}%;">
+          <div class="bar-segment kombi" style="height: ${(kombiShare * 100).toFixed(1)}%;">${kombiLabel}</div>
+          <div class="bar-segment pv" style="height: ${(pvShare * 100).toFixed(1)}%;">${pvLabel}</div>
+        </div>
+        <div class="bar-tick">${escapeHtml(item.label || "")}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function hasEither(row, keyA, keyB) {
+  const a = row[keyA];
+  const b = row[keyB];
+  const hasA = a !== "" && a !== null && a !== undefined;
+  const hasB = b !== "" && b !== null && b !== undefined;
+  return hasA || hasB;
+}
+
+function hasAnyFieldSalesWeeklyValue(row) {
+  return hasEither(row, "IDV PV (weeks)", "IDV Kombi (weeks)") || hasEither(row, "TBK PV (weeks)", "TBK Kombi (weeks)");
+}
+
 // 4. CELEBRATION SLIDE (unchanged)
 
+// Extracts the plain IDV/TBK metric (handles stray whitespace/case only -
+// Metric is always a plain value; PV/Kombi comes from the Type field).
+function getBaseMetric(metricRaw) {
+  const upper = String(metricRaw || "").trim().toUpperCase();
+  if (upper.indexOf("TBK") !== -1) return "TBK";
+  if (upper.indexOf("IDV") !== -1) return "IDV";
+  return upper;
+}
+
 function renderTriggerSlide(trigger) {
-  const metric = String(trigger.Metric || "").toUpperCase();
+  const metric = getBaseMetric(trigger.Metric);
   const type = String(trigger.Type || "").trim().toUpperCase();
+  const team = String(trigger.Team || "").trim().toUpperCase();
   const value = trigger.Value;
 
   const celebrations = window.DASHBOARD_CONFIG.CELEBRATIONS || {};
   const celebration = celebrations[metric] || celebrations.IDV || {};
-
-  // Type "PV" or "RETENTION" gets prefixed onto the metric in the title.
-  // "HP" (default) or anything else shows the team from the trigger sheet
-  // instead: "NEW <TEAM> <METRIC>".
   const emoji = celebration.emoji || "🎉";
-  let titleMiddle;
 
-  if (type === "PV" || type === "RETENTION") {
+  const isFieldSales = team === "FIELD SALES";
+  const isFieldSalesKombi = isFieldSales && type === "KOMBI";
+  const isFieldSalesPv = isFieldSales && type === "PV";
+
+  let titleMiddle;
+  let themeClass = "";
+
+  if (isFieldSalesPv || isFieldSalesKombi) {
+    // Field Sales PV/Kombi: fixed title, distinct background per sub-type,
+    // but the effect (confetti for IDV, money for TBK) stays the default.
+    const subType = isFieldSalesKombi ? "KOMBI" : "PV";
+    titleMiddle = `FIELD SALES ${subType} ${metric}`;
+    themeClass = isFieldSalesKombi ? "fieldsales-kombi-theme" : "fieldsales-pv-theme";
+  } else if (type === "PV" || type === "RETENTION") {
     titleMiddle = `${type} ${metric}`;
+    themeClass = type === "PV" ? "pv-theme" : "retention-theme";
   } else {
-    const team = String(trigger.Team || "").trim().toUpperCase();
     const teamLabel = team ? getTeamDisplayName(team) : "";
     titleMiddle = teamLabel ? `${teamLabel} ${metric}` : metric;
   }
 
   const title = `${emoji} NEW ${titleMiddle} ${emoji}`;
 
-  const isPv = type === "PV";
-  const isRetention = type === "RETENTION";
-
+  // Effect only changes for the non-Field-Sales PV/Retention TBK cases
+  // (sun/buoy); Field Sales always keeps the standard confetti/money.
   let effect = celebration.effect || "confetti";
-  if (isPv && metric === "TBK") effect = "sun";
-  if (isRetention && metric === "TBK") effect = "buoy";
+  if (!isFieldSales && type === "PV" && metric === "TBK") effect = "sun";
+  if (!isFieldSales && type === "RETENTION" && metric === "TBK") effect = "buoy";
 
-  const themeClass = isPv ? "pv-theme" : (isRetention ? "retention-theme" : "");
   const message = value !== "" && value !== null && value !== undefined ? String(value) : "";
 
   return `
@@ -830,7 +1042,7 @@ function getTeamMtdValue(teamName, metric) {
   return Number(row?.[metric] || 0);
 }
 
-function getInlineMtdValue(rows, key) {
+function getInlineValue(rows, key) {
   const row = rows.find(item => item[key] !== "" && item[key] !== null && item[key] !== undefined);
   return Number(row?.[key] || 0);
 }
